@@ -1,6 +1,6 @@
 # AI_INSTRUCTIONS.md — Pointer to SKILL.md
 
-**This file is intentionally short.** The authoritative operating manual is SKILL.md in the [generate-fdi-draft skill repo](https://github.com/alexg207/fdi-draft-skill), not this file. Earlier versions of `AI_INSTRUCTIONS.md` carried full process and style rules; that content has all moved to SKILL.md and is maintained there.
+**This file is intentionally short.** The authoritative operating manual is SKILL.md in the [generate-fdi-draft skill repo](https://github.com/Primary-OS/fdi-draft-skill), not this file. Earlier versions of `AI_INSTRUCTIONS.md` carried full process and style rules; that content has all moved to SKILL.md and is maintained there.
 
 If you're reading this from a per-build clone of `fdi-template/`, your skill source of truth is the SKILL.md you invoked the skill from. Trust SKILL.md over any guidance in this file.
 
@@ -159,4 +159,4 @@ If you're updating SKILL.md and changing process flow, you don't need to update 
 
 ## Shared writing guide
 
-Read [COPYWRITING_GUIDE.md in fdi-draft-skill](https://github.com/alexg207/fdi-draft-skill/blob/main/COPYWRITING_GUIDE.md) before authoring copy. It is the shared editorial policy for the entire build, including Talent and the in-site editor. Preserve approved Welcome, intro, and hero copy and established product names. Read headings together in page order, then supporting text; change only wording with a specific problem. Existing schema, citation, factual, and render checks still apply. Older sample sentences here illustrate field structure, not mandatory prose to imitate.
+Read [COPYWRITING_GUIDE.md in fdi-draft-skill](https://github.com/Primary-OS/fdi-draft-skill/blob/main/COPYWRITING_GUIDE.md) before authoring copy. It is the shared editorial policy for the entire build, including Talent and the in-site editor. Preserve approved Welcome, intro, and hero copy and established product names. Read headings together in page order, then supporting text; change only wording with a specific problem. Existing schema, citation, factual, and render checks still apply. Older sample sentences here illustrate field structure, not mandatory prose to imitate.
