@@ -67,7 +67,7 @@ Claude reads `AI_INSTRUCTIONS.md` first, then this repo's other files, then prod
 ## Local preview
 
 ```bash
-git clone https://github.com/alexg207/fdi-template.git
+git clone https://github.com/Primary-OS/fdi-template.git
 cd fdi-template
 python3 -m http.server 8080
 # open http://localhost:8080
