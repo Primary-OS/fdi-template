@@ -38,7 +38,7 @@ Each segment becomes a top-level tab on the dashboard (Active Pipeline, Mid-Mark
 ### What they do
 The detail view of each company is divided into sections. Default 3:
 
-1. **Company Profile**, Industry, revenue, HQ, cloud provider, AI maturity. Static facts.
+1. **Company Profile**, Industry, revenue, employees, plus the two facts that matter most to this founder's buyers. Static facts.
 2. **{Opportunity} section** (default name: "Inference Opportunity"), Use cases, current stack, pain points, estimated spend. The "why this account fits the thesis" content.
 3. **GTM Strategy**, Approach, key evidence, urgency, target buyer, messaging angle. The "how to actually go win this account" content.
 
@@ -371,7 +371,7 @@ Notice the **specificity of the regulatory citation**, OCC, PCI DSS Level 1, SOX
 
 Each company card has 3 sections (default: Profile / Inference Footprint / GTM Strategy). Each section is a list of `[label, value]` row pairs.
 
-**Profile section: exactly 5 rows, no more.** Locked field set is **Industry, Revenue, Employees, Cloud Provider, AI Maturity**. The last visible row should be a relationship status, but rather than adding a 6th profile row, that lives in the company `tags` array as a brand-color chip. Adding extra profile rows bloats the card without earning the space.
+**Profile section: exactly 5 rows, no more.** Rows 1-3 are locked: **Industry, Revenue, Employees**. Rows 4-5 are build-specific: the two facts that matter most to THIS founder's buyers, chosen once in Phase 5 and used with the same labels on every account. A software or AI-infrastructure founder keeps **Cloud Provider, AI Maturity**; an energy founder might use **Asset Type, Energy-Program Maturity**; a healthcare-workflow founder **EHR Vendor, Payer Mix**. Never ship the software pair to a non-software market: Plexa (10/13) showed "Cloud Provider: Warehouse, flex, and high-bay industrial real estate" on every energy account. Nothing in the dashboard reads these labels, so rename freely. The last visible row should be a relationship status, but rather than adding a 6th profile row, that lives in the company `tags` array as a brand-color chip. Adding extra profile rows bloats the card without earning the space.
 
 **Banned profile fields** (these add no signal):
 - `Founded` (year). Founding year is rarely relevant to a buyer profile.
@@ -380,7 +380,7 @@ Each company card has 3 sections (default: Profile / Inference Footprint / GTM S
 - `Stage`, `ICP Tier`, or any segment-classification field. Redundant with the tab.
 - `Business Type` (B2B vs B2C). Implicit in the founder's ICP.
 
-V1 Datadog Profile section (5 fields, this is the bar):
+V1 Datadog Profile section (5 fields, this is the bar; a software buyer, so rows 4-5 are Cloud Provider / AI Maturity):
 ```javascript
 [
   ['Industry', 'Infrastructure / Cloud Observability'],
@@ -394,7 +394,7 @@ V1 Datadog Profile section (5 fields, this is the bar):
 Patterns:
 - **Values are sentences when the field needs nuance**, not always single-word answers. "AI Maturity" is `'Very advanced. Bits AI in production, extensive ML for anomaly detection...'` not just `'Very advanced'`. The sentence is the evidence for the rating.
 - **Cite source materials inline** when the claim is non-obvious. The Webset enrichment text fields contain inline source URLs (pattern: `fact text | URL`); parse them out into ROW_SOURCES (see 9.9). Empty citations are fine; wrong citations are worse than none.
-- **Name the company's actual AI product** in AI Maturity if there is one (Datadog → Bits AI; Celonis → Process Copilot; Salesforce → Einstein). The named product is the strongest possible signal of AI maturity and gives the founder something specific to anchor outbound on.
+- **Name the company's actual AI product** in AI Maturity (software builds) if there is one (Datadog → Bits AI; Celonis → Process Copilot; Salesforce → Einstein). The named product is the strongest possible signal of AI maturity and gives the founder something specific to anchor outbound on.
 
 **Inference Footprint section: exactly 4 rows.** Locked field set is **Use Cases, Current Stack, Pain Points, Estimated Spend**.
 
@@ -464,6 +464,8 @@ The `ROW_SOURCES` dictionary is keyed by `'CompanyName|SectionTitle|RowLabel'`. 
 "Walmart|Company Profile|Cloud Provider": "Walmart Global Tech blog, 'Our Hybrid Cloud Journey', Nov 2024",
 "Walmart|Company Profile|AI Maturity": "Walmart Global Tech keynote, CES 2025, generative AI across supply chain",
 ```
+
+The third key segment is the row's label exactly as written in `sections`, so citations follow whatever rows 4-5 this build chose (`"Acme Solar|Company Profile|Asset Type"`).
 
 Patterns:
 - **Source citation includes the publication and approximate date.** "Walmart 2025 10-K Filing, SEC EDGAR" is good. "Walmart website" is bad, too vague to verify.
@@ -593,12 +595,11 @@ The Build skill creates an Exa Webset to populate the dashboard. Each enrichment
 
 ### Field-by-field guidance
 
-**Company Profile rows**, short, factual. Use `format: "text"` for most; `format: "options"` for cloud provider (controlled vocabulary).
+**Company Profile rows**, short, factual. Use `format: "text"` for most; `format: "options"` for controlled-vocabulary fields.
 - "Industry classification" → free text
 - "Most recent annual revenue in USD" → text (e.g., "$648B (FY2025)")
 - "Headquarters city and state/country" → text
-- "Primary cloud provider" → options: AWS / GCP / Azure / Multi-cloud / On-premise / Other
-- "AI maturity level (high/medium/low) with one-sentence supporting evidence" → text
+- Rows 4-5 are this build's two buyer-specific facts (see 9.8). Software example: "Primary cloud provider" → options: AWS / GCP / Azure / Multi-cloud / On-premise / Other; "AI maturity level (high/medium/low) with one-sentence supporting evidence" → text. Energy example: "Primary asset type (C&I rooftop / ground-mount solar / storage / other)" → options; "Maturity of the company's energy or demand-response program, with one sentence of evidence" → text.
 
 **Opportunity rows**, vertical-specific. THIS IS WHERE TAILORING MATTERS MOST. Phrasing the enrichment description in the founder's domain language gets dramatically better data.
 - Bad: "Use cases at this company" → returns generic "uses AI for things"
@@ -628,14 +629,14 @@ The Build skill creates an Exa Webset to populate the dashboard. Each enrichment
 2. **Specify the format you want.** "Annual revenue" returns formatted strings; "annual revenue in USD as a number" returns numbers (use `format: "number"` for these).
 3. **Name expected source types.** "Per the company's SEC filings or engineering blog" raises quality vs. unspecified.
 4. **Limit enrichments to 8–12 per Webset.** More enrichments = longer processing time. If you have more fields you want, run a follow-up `createEnrichment` on the existing Webset rather than overloading the initial submission.
-5. **Use `options` format for controlled-vocabulary fields.** Cloud provider, funding stage, AI maturity level, anything where you want one of N values.
+5. **Use `options` format for controlled-vocabulary fields.** Cloud provider, asset type, funding stage, maturity level, anything where you want one of N values.
 6. **Avoid subjective enrichments.** "Is this company a strong fit" returns garbage. "What are the documented use cases that match the founder's product" returns specifics.
 
 ### Adapting the Valar enrichment list to a new vertical
 
 Take Valar's enrichment list (from the build skill prompt) as a starting point. For each line item:
 
-- Is it generic (revenue, HQ, cloud)? **Keep as-is.**
+- Is it generic (revenue, HQ)? **Keep as-is.** Cloud and AI maturity are software-buyer fields; swap them for this founder's profile rows 4-5.
 - Is it vertical-specific (use cases, pain points, current stack)? **Rewrite using the new vertical's language.**
 - Is it tied to Valar's specific axes ("inference cost," "data residency")? **Rewrite to match the new axes** you chose in the signal-axis decisions.
 
@@ -738,12 +739,13 @@ Fill every key from the build's real artifacts (mapping is commented per-key in 
 
 - **Copy voice:** confident analyst briefing the founder. Hyphens only, never em dashes. Hero frames account **quality**, not count ("18,000 rooftops in. The readiest buyers out."). Narrations ≤2 sentences. Keep the honest hedges ("illustrative warm-path layer", "where we have one").
 - **Numbers and citations are real.** `evidenceFeed` lines come from the scored companies' own sources; hero stats are the build's actual counts. Never fabricate.
-- **Exactly one axis carries `wowNote`** - the founder-specific WOW signal. Its body is the "why this signal wins" reasoning from CONTEXT.md, in 3-4 sentences.
+- **Exactly one axis carries `wowNote`** - the founder-specific WOW signal. Its body is the "why this signal wins" reasoning from CONTEXT.md, **50 words at most** (the gate warns over 50 and blocks over 75; Plexa's 106-word note failed redeploy on 10/13).
+- **Partners heading follows the data.** The heading above `partners[]` is derived from each `status`: all signed / onboarding / live / customer → "Already signed & onboarding"; some → "Signed & in the pipeline"; none → "Already in the pipeline". Write the status honestly (`pipeline` for an open conversation); `narration.partnersHeading` overrides only when the founder asks. An empty `partners` array hides the block.
 - **Network stays role-based illustrative** (`illustrative: true`) unless real Affinity/LinkedIn connector data is supplied. Each account belongs to exactly one connector (partition); secondary paths go in `alsoReaches`.
 - **Theme:** the accent color is chosen in the hub build form (a preset dropdown) and rides through `config.theme_color`. `theme-presets.json` (repo root) is the single source of truth for all 12 presets — `ember`(default) `gold` `coral` `rose` `magenta` `violet` `indigo` `blue` `cyan` `teal` `emerald` `lime`. The skill (Phase 8/8c) reads it and stamps BOTH artifacts: the walkthrough via `founder.themeAccent` (the preset's 6 `walkthrough` triples — applied at runtime by build.html:~884), and the dashboard via the `{{THEME_ACCENT_DARK}}`/`{{THEME_ACCENT_LIGHT}}` placeholders (the preset's `dashDark`/`dashLight` base colors expanded to the `--green*` ramp; `--q-med`/`--q-med-d` follow `--green` automatically). Unknown/absent key → `ember`. **Only the accent recolors** — `--purple`/`--teal`/`--q-high`(green)/`--q-low`(red) are fixed on purpose (tier legend + info hierarchy). To add/edit a preset, change `theme-presets.json` only, then add the key to the hub dropdown; all light-mode accents must clear ≥4.5:1 as text on white. Hand-setting `founder.themeAccent` in build-data.js still overrides the preset.
 - **Apostrophe gotcha applies:** curly `’` inside JS strings, then `node --check build-data.js`.
 - **Warmth lines (partnership tone):** `narration.introWarmth` (one sentence under the intro headline) and `narration.finaleWarmth` (one sentence between the finale CTA and replay, `<b>` on the close) are confident-partnership lines — never self-deprecating (no "we gave it our best shot"). Both render via `innerHTML` (trusted HTML: `<b>`/accent spans allowed) and are **guarded** — an absent key hides the element cleanly, so old builds that lack them don't break. The three warmth strings (these two + the dashboard's `{{FEEDBACK_CARD_BODY}}`) play **distinct rhetorical roles and must not repeat each other**: intro = "our deep dive into your world, excited to keep exploring together"; finale = "the start of a conversation, looking forward to continuing the research together"; dashboard card = the explicit two-sided feedback ask, closing on making it stronger together.
-- **TAM discipline:** `scan.universe` is the NARROW-ICP estimate that matches the scan query (the population that would pass all ICP criteria), **not** the broad market TAM. Funnel universe label = "est. in [Founder]'s ICP". `heroStats` = 5 stats leading with the ICP-TAM estimate; `finaleSub` restates the same number in prose. `scan.methodNote` (optional; replaces the generic scan-note when present) tells the full funnel story in plain language, **≤~40 words** (line count is viewport-dependent, so budget words not lines): TAM est. → surfaced & analyzed → strongest fits → curated to final N. Ground the TAM in a real bottom-up method, named in BUILD_NOTES.
+- **TAM discipline:** `scan.universe` is the NARROW-ICP estimate that matches the scan query (the population that would pass all ICP criteria), **not** the broad market TAM. Funnel universe label = "est. in [Founder]'s ICP". `heroStats` = exactly 3 stats, labels of 6 words or fewer, leading with the ICP-TAM estimate (the hero is one row; five long labels wrapped to two rows on Plexa, 10/13); `finaleSub` restates the same number in prose. `scan.methodNote` (optional; replaces the generic scan-note when present) tells the full funnel story in plain language, **≤~40 words** (line count is viewport-dependent, so budget words not lines): TAM est. → surfaced & analyzed → strongest fits → curated to final N. Ground the TAM in a real bottom-up method, named in BUILD_NOTES.
 - **Tagline anti-duplication:** `founder.tagline` renders directly above `introHeadline`. If it would restate the headline, set it to `""` — beat 1 renders cleanly without it.
 - **Score parity on ties:** if Phase 7 broke composite ties with `composite` overrides in data.js, `companies[].score` here carries the identical numbers (see §3 "Breaking score ties"). Walkthrough shortlist and dashboard must agree. (Manual check — `universe` is a number and `finaleSub` is prose, so there's no automated equality gate; eyeball that they state the same figure.)
 
@@ -813,7 +815,8 @@ state.
 
 0. `npm run smoke` in the template repo passes (headless render of both pages:
    zero page errors, one card per company, previews expand in-column and by row,
-   70-100 band with tiers off raw, hero on one line per line, no banned copy).
+   70-100 band with tiers off raw, hero on one line per line, three hero stats in
+   one row, partners heading matches the statuses, no banned copy).
 1. `node --check build-data.js` passes.
 2. Every `narration` key filled EXCEPT the three locked beats (`introHeadline`,
    `introWarmth`, `heroTitle`), which stay empty so build.html's approved copy
@@ -822,7 +825,7 @@ state.
 4. Open `build.html?act=N` for N=0..9 - every scene renders with this build's data.
 5. Weights in `axes[]` sum to 100; `companies[0]` is the intended hero account (act 6 uses it).
 6. Warmth lines render under the headline / between finale CTA and replay when present, and disappear cleanly (no gap) when the keys are removed; `scan.methodNote` replaces the generic scan-note line.
-7. `heroStats` has exactly 5 entries leading with the TAM stat; `scan.universe` (narrow-ICP estimate) and `finaleSub` state the same figure; `founder.tagline` does not restate `introHeadline`.
+7. `heroStats` has exactly 3 entries (labels <= 6 words) leading with the TAM stat; `scan.universe` (narrow-ICP estimate) and `finaleSub` state the same figure; `founder.tagline` does not restate `introHeadline`.
 
 
 ## Shared writing guide

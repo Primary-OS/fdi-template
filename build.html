@@ -226,7 +226,8 @@ a{color:inherit;text-decoration:none;}
   max-width:940px;margin:0 auto 18px;}
 .hero .sub{font-size:16px;color:var(--text-muted);max-width:600px;margin:0 auto 26px;line-height:1.6;}
 .hero .sub b{color:var(--text-mid);font-weight:600;}
-.hero-stats{display:flex;gap:34px;justify-content:center;margin-bottom:40px;flex-wrap:wrap;}
+/* one row of 3, never wrapped: five long labels wrapped to 3+2 on Plexa (10/13) */
+.hero-stats{display:flex;gap:34px;justify-content:center;margin-bottom:40px;flex-wrap:nowrap;}
 .hstat{text-align:center;}
 .hstat .n{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;color:var(--amber-soft);line-height:1;}
 .hstat .l{font-size:12px;color:var(--text-muted);margin-top:7px;letter-spacing:.02em;}
@@ -777,7 +778,7 @@ a{color:inherit;text-decoration:none;}
     <h2 class="act-title rv" data-at="0.02">Accounts <span class="grad">to review</span></h2>
     <p class="act-narr rv" data-at="0.04" id="narrShortlist"></p>
     <div class="ranked" id="ranked"></div>
-    <div class="partners rv" data-at="0.78"><div class="ph">Already signed &amp; onboarding</div><div class="prow" id="prow"></div></div>
+    <div class="partners rv" data-at="0.78" id="partnersWrap"><div class="ph" id="partnersHead"></div><div class="prow" id="prow"></div></div>
   </div></div>
 </section>
 
@@ -1015,11 +1016,12 @@ a{color:inherit;text-decoration:none;}
   document.getElementById('heroTitle').innerHTML=LOCKED_HERO.map(function(def,i){
     var v=_ht[i];return (typeof v==='string'&&v.trim())?v:def;}).join('<br>');
   document.getElementById('heroSubP').innerHTML=N.heroSub||('The account research for <b>'+NAME+'</b>, with the signals, sources, and scores used to build this sample.');
-  // Fallback stats: FIVE, matching the schema, every label distinct. (A four-entry
-  // fallback with 'accounts curated' twice shipped on 8/17 when the named-buyers
-  // stat was swapped out.) Every label states what its number actually counts,
-  // and none of them claims a surface the build may not ship. An EMPTY authored
-  // array falls through to these rather than rendering no stats at all.
+  // Fallback stats: THREE, matching the schema (the hero is one row of 3), every
+  // label distinct. (A four-entry fallback with 'accounts curated' twice shipped
+  // on 8/17 when the named-buyers stat was swapped out.) Every label states what
+  // its number actually counts, and none of them claims a surface the build may
+  // not ship. An EMPTY authored array falls through to these rather than
+  // rendering no stats at all.
   var citedSources=(function(){
     // The real citation count is the companies' own sources; evidenceFeed is just
     // the 8-9 lines the terminal shows.
@@ -1028,8 +1030,6 @@ a{color:inherit;text-decoration:none;}
   })();
   var heroStats=(N.heroStats&&N.heroStats.length)?N.heroStats:[
     {n:D.scan.universe||0,label:D.scan.universeLabel||'in your ICP, your sizing'},
-    {n:D.scan.matched||0,label:'high-fit matches found'},
-    {n:D.axes.length,label:'custom signals'},
     {n:D.scan.curated||D.companies.length,label:'accounts curated'},
     {n:citedSources,label:'cited sources'}];
   document.getElementById('heroStats').innerHTML=heroStats.map(function(s){
@@ -1179,7 +1179,15 @@ a{color:inherit;text-decoration:none;}
     return '<div class="rrow rv" data-at="'+(0.08+i*0.06).toFixed(2)+'" data-score="'+c.score+'">'+
       '<span class="rk">'+(i+1)+'</span><span class="nm2">'+c.name+'<span class="sg">'+c.seg+'</span></span>'+
       '<div class="track"><div class="fill"></div></div><span class="sc">0</span></div>';}).join('');
-  document.getElementById('prow').innerHTML=D.partners.map(function(p){
+  // The heading follows the partners' own statuses. A fixed "Already signed &
+  // onboarding" sat above an in-pipeline account on Plexa (10/13) and overstated
+  // a deal. narration.partnersHeading overrides; no partners hides the block.
+  var PARTNERS=D.partners||[];
+  var nSigned=PARTNERS.filter(function(p){return /\b(signed|onboarding|live|customer)\b/i.test(String(p.status||''));}).length;
+  document.getElementById('partnersHead').textContent=N.partnersHeading||(
+    nSigned&&nSigned===PARTNERS.length?'Already signed & onboarding':nSigned?'Signed & in the pipeline':'Already in the pipeline');
+  if(!PARTNERS.length)document.getElementById('partnersWrap').style.display='none';
+  document.getElementById('prow').innerHTML=PARTNERS.map(function(p){
     return '<div class="pcard"><div class="pn">'+p.name+'</div><div class="ps">'+p.status+'</div><div class="pnote">'+p.note+'</div></div>';}).join('');
 
   /* ---- finale ---- */

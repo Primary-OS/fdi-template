@@ -85,15 +85,18 @@ window.BUILD_DATA = {
     introWarmth: "",                     // absent = locked default process line; "" = hide the line (Imprest removed it). Budget 28 words.
     heroTitle: ["", ""],                 // locked default; if overridden, each line must hold ONE rendered line (<=46 chars)
     heroSub: "",                         // may contain <b>...</b>; ends "Scroll to watch it run."
-    heroStats: [                         // 3 to 5 (one row), every label distinct, no null after backfill (gate). Founder-facing first
-                                         // (SKILL Rule 38): what the market is to THEM, what sits behind the sample, who to talk to.
+    heroStats: [                         // EXACTLY 3 (one row; the gate fails any other count), every label distinct and
+                                         // <= 6 words, no null after backfill (gate). Founder-facing first (SKILL Rule 38):
+                                         // what the market is to THEM, what sits behind the sample, who to talk to.
+                                         // Five long labels wrapped to two rows on Plexa (10/13); Alex cut to three.
       { n: 0, label: "in your ICP (your sizing)" },                  // scan.universe, in the founder's own sizing
-      { n: 0, suffix: "M", label: "customers behind that market (your sizing)" },   // e.g. "22M SMB client relationships"; suffix renders "22M"
-      { n: 10, label: "accounts researched in depth for this first pass" },
-      { n: 0, suffix: "+", label: "customers behind just a few of these accounts" }, // only when cited on the accounts themselves
-      { n: null, label: "named contacts" }               // WRITE null: backfill-build-data.mjs stamps the derived value
-                                                         // after the Affinity fetch, or swaps in a cited-sources count
-                                                         // when there are no warm paths.
+      { n: 10, label: "accounts researched in depth" },
+      { n: null, label: "named contacts" }               // optional third slot. WRITE null: backfill-build-data.mjs stamps the
+                                                         // derived value after the Affinity fetch, or swaps in a cited-sources
+                                                         // count when there are no warm paths. It never ADDS this stat.
+      // Other third slots that hold up: { n: 0, suffix: "M", label: "customers behind that market" } (your sizing,
+      // suffix renders "22M"); { n: 0, suffix: "+", label: "customers behind these accounts" } (only when cited on the
+      // accounts themselves).
     ],
     icp: "",                             // act 02 narration, <=2 sentences
     signals: "",                         // act 03
@@ -104,7 +107,8 @@ window.BUILD_DATA = {
     finaleSub: "",                       // finale — universe -> shortlist -> warm path; restates the scan.universe TAM number in prose
     finaleWarmth: "",                    // optional warmth line between the finale CTA and replay; 1 sentence, <b> on the close (Rule #18); hidden when absent
     scanCollapsedLabel: "high-fit matches we research in depth",
-    excludeLabel: ""                     // "Excluded up front: ..." one line
+    excludeLabel: "",                    // "Excluded up front: ..." one line
+    partnersHeading: ""                  // optional; "" = derived from partners[].status (see partners below)
   },
 
   // ---- act 02: derive the ICP ----------------------------------------------
@@ -136,7 +140,7 @@ window.BUILD_DATA = {
     { key: "", name: "", weight: 0, kind: "Founder-specific|Standard",
       short: "",                         // optional 1-word formula label if name's first word reads wrong
       measures: "", five: "",
-      wowNote: { eyebrow: "Why X is the sharpest signal", body: "" }  // on ONE axis only; <b> allowed
+      wowNote: { eyebrow: "Why X is the sharpest signal", body: "" }  // on ONE axis only; <b> allowed; body <= 50 words (gate; Plexa shipped 106)
     }
   ],
 
@@ -157,6 +161,9 @@ window.BUILD_DATA = {
   },
 
   // ---- act 05: pull the evidence --------------------------------------------
+  // src is ONE source name, spelled exactly as it appears in data.js or BUILD_NOTES.md
+  // (the gate looks for that exact name there). "Exa + LinkedIn" and "Exa search" failed it
+  // on Plexa (10/13); write "Exa", or add the name to BUILD_NOTES.md's sources.
   enrichments: [ { field: "", src: "" } ],  // ~8 columns actually enriched
 
   // terminal feed: 8-9 REAL citations from the scored companies' sources.
@@ -178,6 +185,10 @@ window.BUILD_DATA = {
       sources: [ { t: "Source — claim", tier: 1 } ], srcCount: 0 }
   ],
 
+  // status is shown as written. The heading above the cards follows it: every status
+  // signed / onboarding / live / customer -> "Already signed & onboarding"; some ->
+  // "Signed & in the pipeline"; none -> "Already in the pipeline". Never call a
+  // pipeline account signed. [] hides the block.
   partners: [ { name: "", status: "", note: "" } ],  // signed / onboarding / pipeline
 
   // ---- act 08: the warm-path network ----------------------------------------

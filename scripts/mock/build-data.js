@@ -1,5 +1,5 @@
 /* Mock build-data.js for the smoke test — a CONFORMING build.
-   Deliberately mirrors what a good build ships: five hero stats, a locked intro
+   Deliberately mirrors what a good build ships: three hero stats, a locked intro
    beat, sample-not-census narration, raw scores (the template rescales them),
    and no banned phrases. The smoke test asserts against this, so when a copy
    rule changes here it must change in build-data-template.js too. */
@@ -23,9 +23,7 @@ window.BUILD_DATA = {
     heroSub: "The machine we built around <b>Acme Robotics</b> - custom signals, cited evidence, a readiness score on every account, and a warm path in. Scroll to watch it run.",
     heroStats: [
       { n: 14000, label: "in your ICP, your sizing" },
-      { n: 22, label: "companies profiled" },
-      { n: 4, label: "custom signals" },
-      { n: 12, label: "accounts curated" },
+      { n: 12, label: "accounts researched in depth" },
       { n: 96, label: "cited sources" }
     ],
     icp: "We read your materials, sit with the buyer calls, and study the category - then write the ICP down as plain criteria we can check against any company we surface.",
