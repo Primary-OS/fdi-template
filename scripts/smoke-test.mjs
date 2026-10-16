@@ -45,9 +45,11 @@ const BANNED = [
   { rx: /—/, why: "em dash - hyphens only in rendered copy" },
 ];
 
-/* Labels a hero stat must never carry twice (the 2d0efc3 regression shipped
-   'accounts curated' in two of four slots). */
-const HERO_STAT_COUNT = 5;
+/* The hero is one row of exactly three stats, short labels, none repeated (the
+   2d0efc3 regression shipped 'accounts curated' in two of four slots; Plexa,
+   10/13, shipped five long labels that wrapped to two rows). */
+const HERO_STAT_COUNT = 3;
+const HERO_LABEL_MAX_WORDS = 6;
 
 // ── static file server (same shape as the engine's render-checks harness) ────
 const TYPES = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png", ".avif": "image/avif", ".webp": "image/webp", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".otf": "font/otf" };
@@ -305,14 +307,20 @@ async function checkWalkthrough(page, base, viewport) {
   add(`walkthrough ${tag}: hero ${strict ? "renders one line per authored line" : "stays compact"}`, heroOk,
     hero.missing ? "#heroTitle missing" : `${hero.rendered} rendered / ${hero.authored} authored at ${hero.fontSize}`);
 
-  // W2 — five hero stats, all labels distinct.
+  // W2 — three hero stats, all labels distinct and short.
   const stats = await page.evaluate(() => {
-    const labels = Array.from(document.querySelectorAll("#heroStats .hstat .l")).map((n) => (n.textContent || "").trim());
-    return { count: labels.length, labels, distinct: new Set(labels).size };
+    const cells = Array.from(document.querySelectorAll("#heroStats .hstat"));
+    const labels = cells.map((c) => (c.querySelector(".l")?.textContent || "").trim());
+    const tops = [];
+    cells.forEach((c) => { const t = c.getBoundingClientRect().top; if (!tops.some((x) => Math.abs(x - t) < 2)) tops.push(t); });
+    return { count: labels.length, labels, distinct: new Set(labels).size, rows: tops.length };
   });
-  add(`walkthrough ${tag}: exactly ${HERO_STAT_COUNT} hero stats, no duplicate labels`,
-    stats.count === HERO_STAT_COUNT && stats.distinct === stats.count,
-    `${stats.count} stat(s), ${stats.distinct} distinct label(s): ${stats.labels.join(" | ")}`);
+  const longLabels = stats.labels.filter((l) => l.split(/\s+/).filter(Boolean).length > HERO_LABEL_MAX_WORDS);
+  add(`walkthrough ${tag}: exactly ${HERO_STAT_COUNT} hero stats, distinct labels of <= ${HERO_LABEL_MAX_WORDS} words`,
+    stats.count === HERO_STAT_COUNT && stats.distinct === stats.count && longLabels.length === 0,
+    `${stats.count} stat(s), ${stats.distinct} distinct label(s): ${stats.labels.join(" | ")}${longLabels.length ? `; too long: ${longLabels.join(" | ")}` : ""}`);
+  // W2a — one row. A desktop invariant: .hero-stats wrapped five stats to 3+2.
+  if (strict) add(`walkthrough ${tag}: hero stats sit in one row`, stats.rows === 1, `${stats.rows} row(s)`);
 
   // W3 — narration beats stay within three rendered lines at their real width.
   // The intro beat's headline and process line are measured too: they are the
