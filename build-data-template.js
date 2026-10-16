@@ -104,7 +104,8 @@ window.BUILD_DATA = {
     finaleSub: "",                       // finale — universe -> shortlist -> warm path; restates the scan.universe TAM number in prose
     finaleWarmth: "",                    // optional warmth line between the finale CTA and replay; 1 sentence, <b> on the close (Rule #18); hidden when absent
     scanCollapsedLabel: "high-fit matches we research in depth",
-    excludeLabel: ""                     // "Excluded up front: ..." one line
+    excludeLabel: "",                    // "Excluded up front: ..." one line
+    partnersHeading: ""                  // optional; "" = derived from partners[].status (see partners below)
   },
 
   // ---- act 02: derive the ICP ----------------------------------------------
@@ -178,6 +179,10 @@ window.BUILD_DATA = {
       sources: [ { t: "Source — claim", tier: 1 } ], srcCount: 0 }
   ],
 
+  // status is shown as written. The heading above the cards follows it: every status
+  // signed / onboarding / live / customer -> "Already signed & onboarding"; some ->
+  // "Signed & in the pipeline"; none -> "Already in the pipeline". Never call a
+  // pipeline account signed. [] hides the block.
   partners: [ { name: "", status: "", note: "" } ],  // signed / onboarding / pipeline
 
   // ---- act 08: the warm-path network ----------------------------------------

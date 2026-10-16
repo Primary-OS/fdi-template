@@ -371,6 +371,40 @@ async function checkWalkthrough(page, base, viewport) {
     hits.length ? hits.map((h) => `${h.rx} (${h.why})`).join("; ") : "clean");
 }
 
+// ── partners heading ────────────────────────────────────────────────────────
+// The heading above the partner cards is derived from partners[].status. A fixed
+// "Already signed & onboarding" sat above an in-pipeline account on Plexa (10/13).
+// Each case re-serves the conforming mock with its partners swapped out.
+const PARTNER_CASES = [
+  { name: "all signed", patch: "D.partners=[{name:'A',status:'signed',note:''},{name:'B',status:'onboarding',note:''}];", heading: "Already signed & onboarding" },
+  { name: "some signed", patch: "", heading: "Signed & in the pipeline" },
+  { name: "none signed", patch: "D.partners=[{name:'Aspen Power',status:'pipeline',note:''},{name:'B',status:'in pipeline',note:''}];", heading: "Already in the pipeline" },
+  { name: "override", patch: "D.narration.partnersHeading='Design partners';", heading: "Design partners" },
+  { name: "no partners", patch: "D.partners=[];", hidden: true },
+];
+async function checkPartners(ctx, base) {
+  const mock = readFileSync(path.join(HERE, "mock", "build-data.js"), "utf8");
+  for (const c of PARTNER_CASES) {
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message || String(e)));
+    await page.route(`${base}/build-data.js`, (route) => route.fulfill({
+      contentType: "text/javascript", body: `${mock}\n;(function(D){${c.patch}})(window.BUILD_DATA);\n`,
+    }));
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto(`${base}/walkthrough.html`, { waitUntil: "networkidle" });
+    const got = await page.evaluate(() => {
+      const wrap = document.getElementById("partnersWrap");
+      return { heading: (document.getElementById("partnersHead")?.textContent || "").trim(), hidden: !wrap || getComputedStyle(wrap).display === "none" };
+    });
+    const ok = errors.length === 0 && (c.hidden ? got.hidden : !got.hidden && got.heading === c.heading);
+    add(`walkthrough partners (${c.name}): ${c.hidden ? "block hidden" : `heading "${c.heading}"`}`, ok,
+      errors.length ? `page error: ${errors[0]}` : (got.hidden ? "block hidden" : `heading "${got.heading}"`));
+    await page.close();
+  }
+}
+
 // ── main ────────────────────────────────────────────────────────────────────
 let dir, server, browser;
 try {
@@ -411,6 +445,7 @@ try {
     await checkWalkthrough(p, server.url, vp);
     await p.close();
   }
+  await checkPartners(ctx, server.url);
   await ctx.close();
 } finally {
   if (browser) await browser.close().catch(() => {});
