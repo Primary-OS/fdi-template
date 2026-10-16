@@ -35,6 +35,7 @@ Default: Profile (5 rows) / `[SECTION_2_LABEL]` (4 rows) / GTM Strategy (5 rows)
 
 - `[SECTION_2_LABEL]`: [chosen label — e.g., "Inference Footprint", "Workflow Footprint", "Capex Footprint", "Compliance Footprint", "Trial Footprint"]
 - Justification: [why this label fits the founder's vertical and reads naturally to the buyer]
+- Profile rows 4-5: [the two buyer-specific facts, e.g., "Cloud Provider, AI Maturity" (software) or "Asset Type, Energy-Program Maturity" (energy)] — [why these matter to this founder's buyers]
 
 If you renamed any section or added a 4th section (e.g., "Competitive Landscape", "Decision Unit"), document why.
 

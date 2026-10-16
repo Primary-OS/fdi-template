@@ -38,7 +38,7 @@ Each segment becomes a top-level tab on the dashboard (Active Pipeline, Mid-Mark
 ### What they do
 The detail view of each company is divided into sections. Default 3:
 
-1. **Company Profile**, Industry, revenue, HQ, cloud provider, AI maturity. Static facts.
+1. **Company Profile**, Industry, revenue, employees, plus the two facts that matter most to this founder's buyers. Static facts.
 2. **{Opportunity} section** (default name: "Inference Opportunity"), Use cases, current stack, pain points, estimated spend. The "why this account fits the thesis" content.
 3. **GTM Strategy**, Approach, key evidence, urgency, target buyer, messaging angle. The "how to actually go win this account" content.
 
@@ -371,7 +371,7 @@ Notice the **specificity of the regulatory citation**, OCC, PCI DSS Level 1, SOX
 
 Each company card has 3 sections (default: Profile / Inference Footprint / GTM Strategy). Each section is a list of `[label, value]` row pairs.
 
-**Profile section: exactly 5 rows, no more.** Locked field set is **Industry, Revenue, Employees, Cloud Provider, AI Maturity**. The last visible row should be a relationship status, but rather than adding a 6th profile row, that lives in the company `tags` array as a brand-color chip. Adding extra profile rows bloats the card without earning the space.
+**Profile section: exactly 5 rows, no more.** Rows 1-3 are locked: **Industry, Revenue, Employees**. Rows 4-5 are build-specific: the two facts that matter most to THIS founder's buyers, chosen once in Phase 5 and used with the same labels on every account. A software or AI-infrastructure founder keeps **Cloud Provider, AI Maturity**; an energy founder might use **Asset Type, Energy-Program Maturity**; a healthcare-workflow founder **EHR Vendor, Payer Mix**. Never ship the software pair to a non-software market: Plexa (10/13) showed "Cloud Provider: Warehouse, flex, and high-bay industrial real estate" on every energy account. Nothing in the dashboard reads these labels, so rename freely. The last visible row should be a relationship status, but rather than adding a 6th profile row, that lives in the company `tags` array as a brand-color chip. Adding extra profile rows bloats the card without earning the space.
 
 **Banned profile fields** (these add no signal):
 - `Founded` (year). Founding year is rarely relevant to a buyer profile.
@@ -380,7 +380,7 @@ Each company card has 3 sections (default: Profile / Inference Footprint / GTM S
 - `Stage`, `ICP Tier`, or any segment-classification field. Redundant with the tab.
 - `Business Type` (B2B vs B2C). Implicit in the founder's ICP.
 
-V1 Datadog Profile section (5 fields, this is the bar):
+V1 Datadog Profile section (5 fields, this is the bar; a software buyer, so rows 4-5 are Cloud Provider / AI Maturity):
 ```javascript
 [
   ['Industry', 'Infrastructure / Cloud Observability'],
@@ -394,7 +394,7 @@ V1 Datadog Profile section (5 fields, this is the bar):
 Patterns:
 - **Values are sentences when the field needs nuance**, not always single-word answers. "AI Maturity" is `'Very advanced. Bits AI in production, extensive ML for anomaly detection...'` not just `'Very advanced'`. The sentence is the evidence for the rating.
 - **Cite source materials inline** when the claim is non-obvious. The Webset enrichment text fields contain inline source URLs (pattern: `fact text | URL`); parse them out into ROW_SOURCES (see 9.9). Empty citations are fine; wrong citations are worse than none.
-- **Name the company's actual AI product** in AI Maturity if there is one (Datadog → Bits AI; Celonis → Process Copilot; Salesforce → Einstein). The named product is the strongest possible signal of AI maturity and gives the founder something specific to anchor outbound on.
+- **Name the company's actual AI product** in AI Maturity (software builds) if there is one (Datadog → Bits AI; Celonis → Process Copilot; Salesforce → Einstein). The named product is the strongest possible signal of AI maturity and gives the founder something specific to anchor outbound on.
 
 **Inference Footprint section: exactly 4 rows.** Locked field set is **Use Cases, Current Stack, Pain Points, Estimated Spend**.
 
@@ -464,6 +464,8 @@ The `ROW_SOURCES` dictionary is keyed by `'CompanyName|SectionTitle|RowLabel'`. 
 "Walmart|Company Profile|Cloud Provider": "Walmart Global Tech blog, 'Our Hybrid Cloud Journey', Nov 2024",
 "Walmart|Company Profile|AI Maturity": "Walmart Global Tech keynote, CES 2025, generative AI across supply chain",
 ```
+
+The third key segment is the row's label exactly as written in `sections`, so citations follow whatever rows 4-5 this build chose (`"Acme Solar|Company Profile|Asset Type"`).
 
 Patterns:
 - **Source citation includes the publication and approximate date.** "Walmart 2025 10-K Filing, SEC EDGAR" is good. "Walmart website" is bad, too vague to verify.
@@ -593,12 +595,11 @@ The Build skill creates an Exa Webset to populate the dashboard. Each enrichment
 
 ### Field-by-field guidance
 
-**Company Profile rows**, short, factual. Use `format: "text"` for most; `format: "options"` for cloud provider (controlled vocabulary).
+**Company Profile rows**, short, factual. Use `format: "text"` for most; `format: "options"` for controlled-vocabulary fields.
 - "Industry classification" → free text
 - "Most recent annual revenue in USD" → text (e.g., "$648B (FY2025)")
 - "Headquarters city and state/country" → text
-- "Primary cloud provider" → options: AWS / GCP / Azure / Multi-cloud / On-premise / Other
-- "AI maturity level (high/medium/low) with one-sentence supporting evidence" → text
+- Rows 4-5 are this build's two buyer-specific facts (see 9.8). Software example: "Primary cloud provider" → options: AWS / GCP / Azure / Multi-cloud / On-premise / Other; "AI maturity level (high/medium/low) with one-sentence supporting evidence" → text. Energy example: "Primary asset type (C&I rooftop / ground-mount solar / storage / other)" → options; "Maturity of the company's energy or demand-response program, with one sentence of evidence" → text.
 
 **Opportunity rows**, vertical-specific. THIS IS WHERE TAILORING MATTERS MOST. Phrasing the enrichment description in the founder's domain language gets dramatically better data.
 - Bad: "Use cases at this company" → returns generic "uses AI for things"
@@ -628,14 +629,14 @@ The Build skill creates an Exa Webset to populate the dashboard. Each enrichment
 2. **Specify the format you want.** "Annual revenue" returns formatted strings; "annual revenue in USD as a number" returns numbers (use `format: "number"` for these).
 3. **Name expected source types.** "Per the company's SEC filings or engineering blog" raises quality vs. unspecified.
 4. **Limit enrichments to 8–12 per Webset.** More enrichments = longer processing time. If you have more fields you want, run a follow-up `createEnrichment` on the existing Webset rather than overloading the initial submission.
-5. **Use `options` format for controlled-vocabulary fields.** Cloud provider, funding stage, AI maturity level, anything where you want one of N values.
+5. **Use `options` format for controlled-vocabulary fields.** Cloud provider, asset type, funding stage, maturity level, anything where you want one of N values.
 6. **Avoid subjective enrichments.** "Is this company a strong fit" returns garbage. "What are the documented use cases that match the founder's product" returns specifics.
 
 ### Adapting the Valar enrichment list to a new vertical
 
 Take Valar's enrichment list (from the build skill prompt) as a starting point. For each line item:
 
-- Is it generic (revenue, HQ, cloud)? **Keep as-is.**
+- Is it generic (revenue, HQ)? **Keep as-is.** Cloud and AI maturity are software-buyer fields; swap them for this founder's profile rows 4-5.
 - Is it vertical-specific (use cases, pain points, current stack)? **Rewrite using the new vertical's language.**
 - Is it tied to Valar's specific axes ("inference cost," "data residency")? **Rewrite to match the new axes** you chose in the signal-axis decisions.
 

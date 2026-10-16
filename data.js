@@ -115,8 +115,13 @@ const SEGMENTS = [
 
       // ── 1. CANONICAL placeholder — design partner. Demonstrates the locked
       //    Profile (5 rows) / Section 2 (4 rows) / GTM Strategy (5 rows) shape.
-      //    Per SKILL.md Output Style Rule #10, Profile rows are EXACTLY:
-      //    Industry, Revenue, Employees, Cloud Provider, AI Maturity.
+      //    Per SKILL.md Output Style Rule #10, Profile rows are EXACTLY 5:
+      //    Industry, Revenue, Employees, then the two facts that matter most to
+      //    THIS founder's buyers ({{PROFILE_ROW_4}}, {{PROFILE_ROW_5}}), chosen in
+      //    Phase 5 and labelled the same on every account. Software example:
+      //    Cloud Provider, AI Maturity. Energy example: Asset Type,
+      //    Energy-Program Maturity. (Plexa, 10/13, shipped the software pair on
+      //    energy accounts.) ROW_SOURCES keys use the same labels.
       //    DO NOT add Founded, Headquarters, "[Founder] Status", Stage, or
       //    other rows — relationship status lives in tags as a brand chip.
       {
@@ -137,8 +142,8 @@ const SEGMENTS = [
               ['Industry', '[Specific industry — SIC/NAICS preferred]'],
               ['Revenue', '[$X.XB (FY2025) — range if estimated]'],
               ['Employees', '[Headcount]'],
-              ['Cloud Provider', '[AWS / GCP / Azure / multi-cloud / on-prem]'],
-              ['AI Maturity', '[High / Med / Low — one sentence of supporting evidence]']
+              ['{{PROFILE_ROW_4}}', '[Buyer-specific fact, e.g. AWS / GCP / Azure (software) or C&I rooftop / storage (energy)]'],
+              ['{{PROFILE_ROW_5}}', '[High / Med / Low — one sentence of supporting evidence]']
             ]
           },
           {
@@ -197,8 +202,8 @@ const SEGMENTS = [
               ['Industry', '[X]'],
               ['Revenue', '[$X.XB (FY2025)]'],
               ['Employees', '[X]'],
-              ['Cloud Provider', '[X]'],
-              ['AI Maturity', '[X]']
+              ['{{PROFILE_ROW_4}}', '[X]'],
+              ['{{PROFILE_ROW_5}}', '[X]']
             ]
           },
           {
@@ -269,8 +274,8 @@ const SEGMENTS = [
               ['Industry', '[X]'],
               ['Revenue', '[$X]'],
               ['Employees', '[X]'],
-              ['Cloud Provider', '[X]'],
-              ['AI Maturity', '[X]']
+              ['{{PROFILE_ROW_4}}', '[X]'],
+              ['{{PROFILE_ROW_5}}', '[X]']
             ]
           },
           {
@@ -322,8 +327,8 @@ const SEGMENTS = [
               ['Industry', '[X]'],
               ['Revenue', '[$X]'],
               ['Employees', '[X]'],
-              ['Cloud Provider', '[X]'],
-              ['AI Maturity', '[X]']
+              ['{{PROFILE_ROW_4}}', '[X]'],
+              ['{{PROFILE_ROW_5}}', '[X]']
             ]
           },
           {
@@ -375,8 +380,8 @@ const SEGMENTS = [
               ['Industry', '[X]'],
               ['Revenue', '[$X]'],
               ['Employees', '[X]'],
-              ['Cloud Provider', '[X]'],
-              ['AI Maturity', '[X]']
+              ['{{PROFILE_ROW_4}}', '[X]'],
+              ['{{PROFILE_ROW_5}}', '[X]']
             ]
           },
           {
