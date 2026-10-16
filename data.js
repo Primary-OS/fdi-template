@@ -117,7 +117,7 @@ const SEGMENTS = [
       //    Profile (5 rows) / Section 2 (4 rows) / GTM Strategy (5 rows) shape.
       //    Per SKILL.md Output Style Rule #10, Profile rows are EXACTLY 5:
       //    Industry, Revenue, Employees, then the two facts that matter most to
-      //    THIS founder's buyers ({{PROFILE_ROW_4}}, {{PROFILE_ROW_5}}), chosen in
+      //    THIS founder's buyers (the PROFILE_ROW_4 / _5 tokens), chosen in
       //    Phase 5 and labelled the same on every account. Software example:
       //    Cloud Provider, AI Maturity. Energy example: Asset Type,
       //    Energy-Program Maturity. (Plexa, 10/13, shipped the software pair on
