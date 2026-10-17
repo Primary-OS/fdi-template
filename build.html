@@ -878,7 +878,9 @@ a{color:inherit;text-decoration:none;}
   function qsa(s,el){return Array.prototype.slice.call((el||document).querySelectorAll(s));}
   function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
   function seg(p,a,b){return clamp((p-a)/(b-a),0,1);}
-  function fmt(n){return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+  // Thousands separators go on the integer part only; d fixes the decimals shown
+  // (a hero stat written 2.5 with suffix "M" must read 2.5M, not 2M - C12).
+  function fmt(n,d){var p=(d?Number(n).toFixed(d):String(n)).split('.');p[0]=p[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');return p.join('.');}
 
   /* ---- theme switching (dock + ?theme=) ---- */
   var ACCENT='26 96% 58%';
@@ -1182,8 +1184,17 @@ a{color:inherit;text-decoration:none;}
   // The heading follows the partners' own statuses. A fixed "Already signed &
   // onboarding" sat above an in-pipeline account on Plexa (10/13) and overstated
   // a deal. narration.partnersHeading overrides; no partners hides the block.
+  // Conservative on purpose (C9): status is free text, and a bare word match read
+  // "pipeline - LOI not yet signed" and "Prospective customer, in discovery" as
+  // signed. A status counts as signed only when it OPENS with signed / onboarded /
+  // onboarding / live / customer / paying customer and carries no negation or
+  // pre-contract word anywhere (not, yet, LOI, pilot, trial, prospective,
+  // discovery, ...). Understating a deal is safe; overstating one is the bug.
+  var SIGNED_LEAD=/^(?:signed|onboard(?:ed|ing)|live|(?:paying\s+)?customer)\b/i;
+  var NOT_SIGNED=/\b(?:not|no|non|never|yet|un(?:signed|paid|confirmed|committed|official)|pending|awaiting|pre|prospect\w*|potential|possible|pipeline|loi|letter\s+of\s+intent|mou|pilot\w*|trial\w*|poc|proof\s+of\s+concept|discovery|evaluat\w*|proposal|negotiat\w*|intro\w*|talks?|talking|exploring|considering|interested|verbal\w*|expected|planned|target\w*|soon|draft|former\w*|churned|lost|paused|cancel\w*|ended)\b/i;
+  function isSigned(st){st=String(st||'').trim();return SIGNED_LEAD.test(st)&&!NOT_SIGNED.test(st);}
   var PARTNERS=D.partners||[];
-  var nSigned=PARTNERS.filter(function(p){return /\b(signed|onboarding|live|customer)\b/i.test(String(p.status||''));}).length;
+  var nSigned=PARTNERS.filter(function(p){return isSigned(p.status);}).length;
   document.getElementById('partnersHead').textContent=N.partnersHeading||(
     nSigned&&nSigned===PARTNERS.length?'Already signed & onboarding':nSigned?'Signed & in the pipeline':'Already in the pipeline');
   if(!PARTNERS.length)document.getElementById('partnersWrap').style.display='none';
@@ -1343,18 +1354,22 @@ a{color:inherit;text-decoration:none;}
   }
 
   /* ---- hero count-ups: fire when beat 2 first reveals ---- */
-  function countUp(el,to,dur){
+  // Decimals are kept as authored, up to 2 (C12: parseInt turned a founder's
+  // { n: 2.5, suffix: "M" } into "2M" while the gate accepted it).
+  function countUp(el,raw,dur){
     var sfx=el.getAttribute('data-suffix')||'';   // "M", "+": founder-facing stats read "22M", "3,400+"
-    if(REDUCED){el.textContent=fmt(to)+sfx;return;}
-    var t0=null;
+    var to=parseFloat(raw),m=String(raw).match(/\.(\d+)/),d=m?Math.min(2,m[1].length):0;
+    if(!isFinite(to)){el.textContent=String(raw)+sfx;return;}
+    if(REDUCED){el.textContent=fmt(to,d)+sfx;return;}
+    var t0=null,k=Math.pow(10,d);
     function step(ts){if(t0===null)t0=ts;var p=clamp((ts-t0)/dur,0,1),e=1-Math.pow(1-p,3);
-      el.textContent=fmt(Math.round(to*e))+sfx;if(p<1)requestAnimationFrame(step);}
+      el.textContent=fmt(Math.round(to*e*k)/k,d)+sfx;if(p<1)requestAnimationFrame(step);}
     requestAnimationFrame(step);
   }
   var statsStarted=false;
   function runCountUps(){
     if(statsStarted)return; statsStarted=true;
-    qsa('.hstat .n').forEach(function(el,i){setTimeout(function(){countUp(el,parseInt(el.getAttribute('data-count'),10),1400);},i*120);});
+    qsa('.hstat .n').forEach(function(el,i){setTimeout(function(){countUp(el,el.getAttribute('data-count'),1400);},i*120);});
   }
   if(REDUCED)runCountUps();
 

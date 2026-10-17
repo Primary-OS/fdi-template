@@ -48,8 +48,9 @@ const ROW_SOURCES = {
    (near-term ICP) → "Enterprise" (stretch ICP). See TEMPLATE_GUIDE.md.
 
    Segment object:
-     id            string — slug used in URL/tab state, must match tab data
-     label         string — short label shown on tab
+     id            string — slug used in URL/tab state (one tab per segment is
+                            built at runtime; never hand-write tab buttons)
+     label         string — short display label shown on the segment's tab
      icon          string — emoji or unicode glyph (legacy, can be empty)
      icon_svg      string — inline SVG used in section header (optional)
      eyebrow       string — small uppercase label above title

@@ -5,12 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{PRODUCT_NAME}} — Intelligence Map</title>
 <script>(function(){try{if(localStorage.getItem("{{PRODUCT_SLUG}}-theme")==="light")document.documentElement.setAttribute("data-theme","light");}catch(e){}})();
-function toggleTheme(){var h=document.documentElement;if(h.getAttribute("data-theme")==="light"){h.removeAttribute("data-theme");try{localStorage.setItem("{{PRODUCT_SLUG}}-theme","dark")}catch(e){}}else{h.setAttribute("data-theme","light");try{localStorage.setItem("{{PRODUCT_SLUG}}-theme","light")}catch(e){}}}
-/* The brand colour behind the header mark, sampled from the founder's logo by the
-   build (scripts/fdi/build-logo-assets.mjs). Quoted on purpose: an unsubstituted
-   {{token}} in executable position is a SyntaxError that kills the whole script,
-   and the reader below ignores a value that still looks like a token. */
-var LOGO_CHIP_BG = '{{LOGO_CHIP_BG}}';</script>
+function toggleTheme(){var h=document.documentElement;if(h.getAttribute("data-theme")==="light"){h.removeAttribute("data-theme");try{localStorage.setItem("{{PRODUCT_SLUG}}-theme","dark")}catch(e){}}else{h.setAttribute("data-theme","light");try{localStorage.setItem("{{PRODUCT_SLUG}}-theme","light")}catch(e){}}}</script>
 <!-- Blank stubs, swapped at runtime for this build's own icons when they exist,
      so a build with no founder logo never 404s a favicon. -->
 <link rel="icon" id="favicon" href="data:,">
@@ -844,9 +839,7 @@ a{color:inherit;}
 
   <nav class="page-tabs" id="tab-nav">
     <button class="page-tab tab-link active" data-tab="all" onclick="switchTab('all')">All <span class="tab-count" id="tab-count-all">0</span></button>
-    <button class="page-tab tab-link" data-tab="pipeline" onclick="switchTab('pipeline')">Active Pipeline <span class="tab-count" id="tab-count-pipeline">0</span></button>
-    <button class="page-tab tab-link" data-tab="midmarket" onclick="switchTab('midmarket')">Mid-Market <span class="tab-count" id="tab-count-midmarket">0</span></button>
-    <button class="page-tab tab-link" data-tab="enterprise" onclick="switchTab('enterprise')">Enterprise <span class="tab-count" id="tab-count-enterprise">0</span></button>
+    <!-- Segment tabs: one per data.js SEGMENTS entry, labelled from SEGMENTS[].label, built at runtime by renderSegmentTabs(). Do not hand-write them here. -->
     <button class="page-tab tab-link" data-tab="network" onclick="switchTab('network')">Network</button>
     <button class="page-tab tab-link" data-tab="contacts" onclick="switchTab('contacts')">Contacts</button>
     <!-- COMPETITORS_NAV --><!-- Phase 8d stamps this into <a class="page-tab" href="competitors.html">Competitors</a> when the competitors module is selected; stays an inert comment otherwise. -->
@@ -1117,7 +1110,7 @@ function computeJobSignal(c){
     return !/\/careers\/?$|\/careers\.html$|\/careers-home\/?$|^https?:\/\/jobs\.[a-z]+\.com\/?$|\/careers\/jobs\/all\/?$|\/company\/careers\/?$|\/careers\/$|careers\/apply-now/.test(url);
   });
   // The per-build hiring-keyword regex arrives as a SOURCE STRING (no slashes, 'i'
-  // applied here), never as a bare regex literal: an unsubstituted {{token}} in
+  // applied here), never as a bare regex literal: an unsubstituted template token in
   // executable position is a SyntaxError that kills this whole script - the entire
   // dashboard rendered blank on the raw template until 8/17 because of exactly that.
   // An intact token or a bad pattern falls back to the generic office-roles regex,
@@ -1216,9 +1209,46 @@ var DISPLAY_FLOOR = 70, DISPLAY_TOP = 100, MIN_SPREAD = 10;
     var el=document.getElementById(pair[0]); if(!el)return;
     var probe=new Image(); probe.onload=function(){el.href=pair[1];}; probe.src=pair[1];
   });
+  // The chip colour is read from build-data.js founder.logoChipBg, which
+  // build-logo-assets.mjs stamps after the agent. It used to arrive as a
+  // LOGO_CHIP_BG template token in this file, and the agent's zero-tokens-left
+  // sweep blanked it before the engine could fill it, so an uploaded logo never tinted
+  // the chip (Imprest 10/5; C7). Read as text, never executed, so a broken or
+  // missing build-data.js costs only the tint, never the dashboard.
   var chip=document.querySelector('.logo-mark');
-  var bg=(typeof LOGO_CHIP_BG!=='undefined')?LOGO_CHIP_BG:null;
-  if(chip&&bg&&!/\{\{/.test(bg))chip.style.background=bg;
+  if(chip&&window.fetch){
+    fetch('./build-data.js',{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
+      // Comments stripped first: the schema's commented-out example
+      // (logoChipBg with a sample hex) must never paint the chip (R-CT5).
+      t=String(t||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^[ \t]*\/\/.*$/gm,'');
+      var m=/\blogoChipBg\s*:\s*["'](#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\([^)"']{1,40}\))["']/.exec(t);
+      if(m)chip.style.background=m[1];
+    }).catch(function(){});
+  }
+})();
+
+// Segment tabs follow SEGMENTS (C8). The nav used to hard-code pipeline /
+// midmarket / enterprise while data.js carries the founder's own buyer types
+// (2 for Imprest, 4 for Plexa): a tab with no segment threw on click and kept
+// the previous grid, and a fourth segment was reachable only via All. Any
+// segment button already in the nav (a hand-edited build) is dropped and the
+// set is rebuilt in SEGMENTS order right after "All".
+function segById(id){ return SEGMENTS.find(function(s){ return s.id === id; }); }
+function segLabel(seg){ return (seg && (seg.label || seg.title || seg.id)) || ''; }
+(function renderSegmentTabs(){
+  var nav=document.getElementById('tab-nav'); if(!nav) return;
+  var FIXED={all:1,network:1,contacts:1};
+  nav.querySelectorAll('.tab-link[data-tab]').forEach(function(b){ if(!FIXED[b.dataset.tab]) b.remove(); });
+  var anchor=nav.querySelector('.tab-link[data-tab="all"]');
+  SEGMENTS.forEach(function(seg){
+    var b=document.createElement('button');
+    b.className='page-tab tab-link'; b.dataset.tab=seg.id; b.type='button';
+    b.addEventListener('click', function(){ switchTab(seg.id); });
+    b.appendChild(document.createTextNode(segLabel(seg)+' '));
+    var n=document.createElement('span'); n.className='tab-count'; n.id='tab-count-'+seg.id; n.textContent='0';
+    b.appendChild(n);
+    if(anchor&&anchor.parentNode===nav){ nav.insertBefore(b, anchor.nextSibling); anchor=b; } else nav.insertBefore(b, nav.firstChild);
+  });
 })();
 
 // Tab counts
@@ -1229,7 +1259,7 @@ SEGMENTS.forEach(function(seg){
 var _elAll=document.getElementById('tab-count-all'); if(_elAll) _elAll.textContent=getAllCompaniesFlat().length;
 
 // === QUEUE RENDER ===
-function getCurrentSeg(){if(state.tab==='all')return {id:'all', companies:getAllCompaniesFlat()};return SEGMENTS.find(function(s){return s.id === state.tab;});}
+function getCurrentSeg(){if(state.tab==='all')return {id:'all', companies:getAllCompaniesFlat()};return segById(state.tab)||{id:'all', companies:getAllCompaniesFlat()};}
 
 function getFilteredCompanies(){
   var seg = getCurrentSeg();
@@ -1292,7 +1322,11 @@ function renderQueue(){
     midmarket: {title:'Mid-market · Intelligence Map', sub:'{{SEGMENT_MIDMARKET_SUBTITLE}} ' + totalQueue + ' accounts evaluated, ' + aboveThresh + ' above 50-signal threshold.'},
     enterprise: {title:'Enterprise · Intelligence Map', sub:'Large regulated enterprises, longer cycles, $800K+ ACV. ' + totalQueue + ' accounts evaluated, ' + aboveThresh + ' above 50-signal threshold.'}
   };
-  var t = titles[state.tab] || titles.pipeline;
+  // Segment headings use the segment's own label; the per-id subtitles above
+  // stay for the default ids, any other segment uses its data.js desc.
+  var curSeg = segById(state.tab);
+  var t = state.tab === 'all' || !curSeg ? titles.all
+    : { title: segLabel(curSeg) + ' · Intelligence Map', sub: titles[state.tab] ? titles[state.tab].sub : ((curSeg.desc ? curSeg.desc + ' ' : '') + totalQueue + ' accounts evaluated, ' + aboveThresh + ' above 50-signal threshold.') };
   document.getElementById('ctx-title').textContent = t.title;
   document.getElementById('ctx-sub').textContent = t.sub;
 
@@ -1794,6 +1828,9 @@ function setSort(s){
   window.__fdiNoNetwork=true;
 })();
 function switchTab(tab){
+  // A tab id with no segment behind it (stale deep link, hand-edited nav) lands on
+  // the overview instead of throwing in getCurrentSeg (C8).
+  if(tab!=='all'&&tab!=='network'&&tab!=='contacts'&&tab!=='detail'&&!segById(tab))tab='all';
   if(window.__fdiNoNetwork&&(tab==='network'||tab==='contacts'))tab='all';  // #network deep links fall back to the overview
   // remember where a "drill-in" jump came from so Contacts can offer a Back button;
   // a plain nav-bar click to Contacts (not via a stat) clears it.
@@ -3295,7 +3332,8 @@ function getAllCompaniesFlat(){
     state._viaStat = true;
     switchTab('contacts');
   }
-  var TAB_LABEL={network:'network map',all:'overview',pipeline:'active pipeline',midmarket:'mid-market',enterprise:'enterprise'};
+  var TAB_LABEL={network:'network map',all:'overview'};
+  SEGMENTS.forEach(function(s){ TAB_LABEL[s.id]=segLabel(s).toLowerCase(); });
   var ctSearch=document.getElementById('ct-search');
   if(ctSearch) ctSearch.addEventListener('input', function(){ state.ctQ=ctSearch.value.trim().toLowerCase(); renderContacts(); });
 
@@ -3323,10 +3361,10 @@ function openDetail(name){
   // Force-clear the queue grid to drop any sticky elements
   var qg = document.getElementById('queue-grid'); if (qg) qg.innerHTML = '';
 
-  var segLabel = c._segId === 'enterprise' ? 'Enterprise' : c._segId === 'midmarket' ? 'Mid-Market' : 'Active Pipeline';
+  var crumbLabel = segLabel(segById(c._segId)) || 'All';
   var status = statusFor(c);
   document.getElementById('detail-breadcrumb').innerHTML =
-    '<a onclick="state.tab=\'' + c._segId + '\';switchTab(\'' + c._segId + '\');">← ' + segLabel + '</a><span>/</span>' +
+    '<a onclick="state.tab=\'' + c._segId + '\';switchTab(\'' + c._segId + '\');">← ' + crumbLabel + '</a><span>/</span>' +
     '<span style="color:var(--text);font-weight:600;">'+c.name+'</span>';
 
   var allTags = (c.tags||[]).map(function(t){return '<span class="tag '+t.c+'" data-tip="'+(t.tip||t.t).replace(/"/g,'&quot;')+'">'+t.t+'</span>';}).join('');
