@@ -389,6 +389,16 @@ const PARTNER_CASES = [
   { name: "none signed", patch: "D.partners=[{name:'Aspen Power',status:'pipeline',note:''},{name:'B',status:'in pipeline',note:''}];", heading: "Already in the pipeline" },
   { name: "override", patch: "D.narration.partnersHeading='Design partners';", heading: "Design partners" },
   { name: "no partners", patch: "D.partners=[];", hidden: true },
+  // C9: status is free text, and a bare word match read negated or pre-contract
+  // statuses as signed. These are the reviewer's counter-examples; every one of
+  // them must read as pipeline.
+  { name: "LOI not yet signed", patch: "D.partners=[{name:'A',status:'pipeline - LOI not yet signed',note:''}];", heading: "Already in the pipeline" },
+  { name: "prospective customer", patch: "D.partners=[{name:'A',status:'Prospective customer, in discovery',note:''}];", heading: "Already in the pipeline" },
+  { name: "unpaid pilot", patch: "D.partners=[{name:'A',status:'Pilot live in Q1 (unpaid trial)',note:''}];", heading: "Already in the pipeline" },
+  { name: "LOI + paid pilot", patch: "D.partners=[{name:'A',status:'Design partner (LOI)',note:''},{name:'B',status:'Paid pilot',note:''}];", heading: "Already in the pipeline" },
+  { name: "negated signed", patch: "D.partners=[{name:'A',status:'Not yet signed',note:''},{name:'B',status:'Unsigned',note:''},{name:'C',status:'Signed LOI',note:''}];", heading: "Already in the pipeline" },
+  { name: "signed + negated", patch: "D.partners=[{name:'A',status:'Signed design partner',note:''},{name:'B',status:'Customer (churned)',note:''}];", heading: "Signed & in the pipeline" },
+  { name: "unambiguous signed", patch: "D.partners=[{name:'A',status:'Live customer',note:''},{name:'B',status:'Onboarded',note:''},{name:'C',status:'Paying customer since 2024',note:''}];", heading: "Already signed & onboarding" },
 ];
 async function checkPartners(ctx, base) {
   const mock = readFileSync(path.join(HERE, "mock", "build-data.js"), "utf8");
@@ -411,6 +421,146 @@ async function checkPartners(ctx, base) {
       errors.length ? `page error: ${errors[0]}` : (got.hidden ? "block hidden" : `heading "${got.heading}"`));
     await page.close();
   }
+}
+
+// ── hero stat values ────────────────────────────────────────────────────────
+// C12: the count-up parsed data-count with parseInt, so a founder sizing written
+// { n: 2.5, suffix: "M" } rendered "2M" while the gate accepted it. Checked on
+// both paths: reduced motion (set at once) and the animated count-up.
+const HERO_VALUE_PATCH = "D.narration.heroStats=[{n:2.5,suffix:'M',label:'in your ICP, your sizing'},{n:14000,label:'accounts researched in depth'},{n:0.75,suffix:'+',label:'cited sources'}];";
+const HERO_VALUE_WANT = ["2.5M", "14,000", "0.75+"];
+async function checkHeroValues(ctx, base) {
+  const mock = readFileSync(path.join(HERE, "mock", "build-data.js"), "utf8");
+  for (const reduced of [true, false]) {
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message || String(e)));
+    await page.route(`${base}/build-data.js`, (route) => route.fulfill({
+      contentType: "text/javascript", body: `${mock}\n;(function(D){${HERO_VALUE_PATCH}})(window.BUILD_DATA);\n`,
+    }));
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.emulateMedia({ reducedMotion: reduced ? "reduce" : "no-preference" });
+    await page.goto(`${base}/walkthrough.html`, { waitUntil: "networkidle" });
+    if (!reduced) {
+      // The count-up fires as beat 2 reveals; scroll through the hero and let the
+      // 1.4s ease finish.
+      for (let y = 0; y <= 3000; y += 250) { await page.evaluate((v) => window.scrollTo(0, v), y); await page.waitForTimeout(60); }
+      await page.waitForTimeout(2200);
+    }
+    const got = await page.evaluate(() => Array.from(document.querySelectorAll("#heroStats .hstat .n")).map((n) => (n.textContent || "").trim()));
+    const ok = errors.length === 0 && JSON.stringify(got) === JSON.stringify(HERO_VALUE_WANT);
+    add(`walkthrough hero stats (${reduced ? "reduced motion" : "animated"}): decimals render as written`, ok,
+      errors.length ? `page error: ${errors[0]}` : `rendered ${got.join(" | ")}; want ${HERO_VALUE_WANT.join(" | ")}`);
+    await page.close();
+  }
+}
+
+// ── segment tabs ────────────────────────────────────────────────────────────
+// C8: the nav hard-coded pipeline / midmarket / enterprise while data.js carries
+// the founder's own buyer types (2 for Imprest, 4 for Plexa). A tab with no
+// segment threw on click; a fourth segment had no tab. Each case re-serves the
+// template's data.js with SEGMENTS reshaped, clicks every segment tab for real,
+// and pokes a stale tab id.
+const SEGMENT_CASES = [
+  { name: "template's 2 segments", patch: "" },
+  { name: "4 segments", patch: "var c=function(i,id,label){var s=JSON.parse(JSON.stringify(SEGMENTS[i]));s.id=id;s.label=label;s.companies.forEach(function(co){co.name=co.name+' '+label;});return s;};SEGMENTS.push(c(1,'enterprise','Enterprise'),c(1,'utilities','Utility Co-ops'));" },
+  { name: "1 segment", patch: "SEGMENTS.splice(1);" },
+];
+async function checkSegmentTabs(ctx, base) {
+  const dataJs = readFileSync(path.join(ROOT, "data.js"), "utf8");
+  for (const c of SEGMENT_CASES) {
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message || String(e)));
+    if (c.patch) await page.route(`${base}/data.js`, (route) => route.fulfill({
+      contentType: "text/javascript", body: `${dataJs}\n;(function(){${c.patch}})();\n`,
+    }));
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${base}/dashboard.html`, { waitUntil: "networkidle" });
+    const shape = await page.evaluate(() => ({
+      segs: SEGMENTS.map((s) => ({ id: s.id, label: s.label, n: s.companies.length })),
+      tabs: Array.from(document.querySelectorAll("#tab-nav .tab-link")).map((b) => ({ id: b.dataset.tab, text: (b.firstChild && b.firstChild.nodeValue || "").trim() })),
+    }));
+    const segTabs = shape.tabs.filter((t) => !["all", "network", "contacts"].includes(t.id));
+    const parity = segTabs.length === shape.segs.length && segTabs.every((t, i) => t.id === shape.segs[i].id && t.text === shape.segs[i].label)
+      && shape.tabs[0]?.id === "all";
+    add(`dashboard tabs (${c.name}): one tab per segment, in order, after All`, parity,
+      `${segTabs.length} segment tab(s) [${segTabs.map((t) => t.text).join(", ")}] for ${shape.segs.length} segment(s)`);
+
+    const bad = [];
+    for (const seg of shape.segs) {
+      const before = errors.length;
+      // A real click (not switchTab) so the button's own wiring is exercised.
+      const btn = page.locator(`#tab-nav .tab-link[data-tab="${seg.id}"]`);
+      if (!(await btn.count())) { bad.push(`${seg.id}: no tab for this segment`); continue; }
+      await btn.first().click({ timeout: 5000 });
+      const got = await page.evaluate((id) => ({
+        active: document.querySelector("#tab-nav .tab-link.active")?.dataset.tab,
+        cards: document.querySelectorAll("#queue-grid .card").length,
+        title: document.getElementById("ctx-title")?.textContent || "",
+      }), seg.id);
+      if (errors.length > before) bad.push(`${seg.id}: ${errors[errors.length - 1]}`);
+      else if (got.active !== seg.id || got.cards !== seg.n || !got.title.includes(seg.label)) bad.push(`${seg.id}: active=${got.active} cards=${got.cards}/${seg.n} title="${got.title}"`);
+    }
+    add(`dashboard tabs (${c.name}): every segment tab opens its own cards`, bad.length === 0,
+      bad.length ? bad.join("; ") : `${shape.segs.length} tab(s) clicked clean`);
+
+    // A stale id (an old #link, a removed segment) must land on All, not throw.
+    const stale = await page.evaluate(() => {
+      const ghost = ["enterprise", "midmarket", "pipeline", "nope"].find((id) => !SEGMENTS.some((s) => s.id === id));
+      try { switchTab(ghost); return { ghost, tab: state.tab }; } catch (e) { return { ghost, err: e.message }; }
+    });
+    add(`dashboard tabs (${c.name}): a tab id with no segment falls back to All`, !stale.err && stale.tab === "all",
+      stale.err ? `switchTab('${stale.ghost}') threw: ${stale.err}` : `switchTab('${stale.ghost}') -> ${stale.tab}`);
+    await page.close();
+  }
+}
+
+// ── D1 sensitive-phrase policy ──────────────────────────────────────────────
+// C6: the template's own schema comment ("memo, calls, diligence") and this
+// conforming mock ("Your memo", "Diligence notes") modelled copy the engine's D1
+// deploy gate blocks, so a faithful agent failed D1 and leaned on the repair
+// pass. Same matching as fdi-engine scripts/fdi/check-deploy-content.mjs: a deny
+// hit fails unless an allow match covers it. The engine's policy file is used
+// when a sibling checkout has one; the copy below is the fallback.
+const D1_FALLBACK = {
+  deny: ["\\bdiligence\\b", "\\bterm sheet\\b", "\\bdeal[- ]?flow\\b", "\\binvestment memo\\b", "\\bmemo\\b", "\\bfundrais(?:e|ing|ed)\\b", "\\bcap table\\b"],
+  allow: ["\\bmemory\\b", "\\bmemo(?:rial|rable|ize|randum of understanding)\\b", "\\b(?:due|in|under|enters?|entered|entering)[- ](?:due[- ])?diligence\\b"],
+};
+function loadD1Policy() {
+  for (const sib of ["../fdi-engine", "../../CascadeProjects/fdi-engine", "../../fdi-engine"]) {
+    const p = path.resolve(ROOT, sib, "scripts/fdi/sensitive-policy.json");
+    if (existsSync(p)) { try { return { policy: JSON.parse(readFileSync(p, "utf8")), from: p }; } catch { /* fall through */ } }
+  }
+  return { policy: D1_FALLBACK, from: "built-in copy" };
+}
+function d1Violations(text, policy) {
+  const out = [];
+  const allow = (policy.allow || []).map((a) => new RegExp(a, "gi"));
+  for (const src of policy.deny || []) {
+    const re = new RegExp(src, "gi");
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const s0 = m.index, e0 = s0 + m[0].length;
+      const covered = allow.some((a) => { a.lastIndex = 0; let am; while ((am = a.exec(text)) !== null) { if (!am[0].length) { a.lastIndex++; continue; } if (am.index <= s0 && am.index + am[0].length >= e0) return true; if (am.index > e0) break; } return false; });
+      if (!covered) out.push(`"${m[0]}" (${text.slice(Math.max(0, s0 - 20), e0 + 20).replace(/\s+/g, " ").trim()})`);
+      if (!m[0].length) re.lastIndex++;
+    }
+  }
+  return out;
+}
+function checkD1(dir) {
+  const { policy, from } = loadD1Policy();
+  // Everything the staged build would deploy, plus the two schema files agents
+  // copy wholesale (their comments travel into the build's data files).
+  const files = ["index.html", "dashboard.html", "walkthrough.html", "data.js", "build-data.js", "network-data.js", "competitors.html", "competitors-data.js"]
+    .map((f) => path.join(dir, f))
+    .concat([path.join(ROOT, "build-data-template.js"), path.join(ROOT, "competitors-data-template.js")])
+    .filter((f) => existsSync(f));
+  const hits = [];
+  for (const f of files) for (const v of d1Violations(readFileSync(f, "utf8"), policy)) hits.push(`${path.basename(f)}: ${v}`);
+  add("template + mock pass the D1 sensitive-phrase policy", hits.length === 0,
+    hits.length ? hits.slice(0, 6).join("; ") : `${files.length} file(s) clean (policy: ${from})`);
 }
 
 // ── main ────────────────────────────────────────────────────────────────────
@@ -454,7 +604,10 @@ try {
     await p.close();
   }
   await checkPartners(ctx, server.url);
+  await checkHeroValues(ctx, server.url);
+  await checkSegmentTabs(ctx, server.url);
   await ctx.close();
+  checkD1(dir);
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (server) await server.close().catch(() => {});
