@@ -59,7 +59,8 @@ window.BUILD_DATA = {
     // asset or leave it out.
     // logoMarkWhite: '<img src="./assets/logo-mark-white.png" alt="">',
     // logoChipBg: the brand colour sampled from the logo, painted behind the
-    // header mark. A white-on-colour signet is invisible on the default chip.
+    // header mark on BOTH pages (the dashboard reads it from this file, C7). A
+    // white-on-colour signet is invisible on the default chip.
     // logoChipBg: "#b80000",
     // logoIsFilled: true for a solid signet, false for line art. A filled mark
     // needs a quieter ghost (lower opacity, no glow, smaller) than line art.
