@@ -20,6 +20,7 @@
    browser that launches and then finds problems is always a hard failure.
    ============================================================================ */
 import http from "node:http";
+import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync, mkdtempSync, cpSync, writeFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -589,6 +590,22 @@ function checkD1(dir) {
     hits.length ? hits.slice(0, 6).join("; ") : `${files.length} file(s) clean (policy: ${from})`);
 }
 
+// ── engine copy validator ───────────────────────────────────────────────────
+// The mock is the "conforming" build-data.js, so it must pass the engine's own
+// copy gate on top of the template's data.js. It cited "Clay", which the sample
+// data.js never names, and failed four citation checks. Runs only when an engine
+// checkout is found (FDI_ENGINE_DIR, or a sibling fdi-engine).
+function checkEngineCopyGate(dir) {
+  const cands = [process.env.FDI_ENGINE_DIR, "../fdi-engine", "../../CascadeProjects/fdi-engine", "../../fdi-engine"]
+    .filter(Boolean).map((d) => path.resolve(ROOT, d, "scripts/fdi/lib/validate-gtm-data.mjs"));
+  const v = cands.find((p) => existsSync(p));
+  if (!v) { add("mock passes the engine copy validator", true, "skipped - no engine checkout (set FDI_ENGINE_DIR)"); return; }
+  const r = spawnSync(process.execPath, [v, dir], { encoding: "utf8" });
+  const errs = `${r.stdout}\n${r.stderr}`.split("\n").filter((l) => l.startsWith("::error"));
+  add("mock passes the engine copy validator", r.status === 0 && errs.length === 0,
+    errs.length ? errs.slice(0, 4).join(" | ") : `clean (${path.relative(ROOT, v)})`);
+}
+
 // ── main ────────────────────────────────────────────────────────────────────
 let dir, server, browser;
 try {
@@ -635,6 +652,7 @@ try {
   await checkLogoChip(ctx, server.url);
   await ctx.close();
   checkD1(dir);
+  checkEngineCopyGate(dir);
 } finally {
   if (browser) await browser.close().catch(() => {});
   if (server) await server.close().catch(() => {});

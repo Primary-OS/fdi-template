@@ -34,7 +34,7 @@ window.BUILD_DATA = {
     network: "Through Primary's network of partners, advisors, founders, and operators, we already hold warm introductions into part of this sample. Every line is a real relationship.",
     finaleSub: "From an estimated 14,000 companies in your ICP, a first-pass sample of 12 accounts, each with a warm path where we have one.",
     finaleWarmth: "There is <b>so much more we can map and build together</b>.",
-    scanCollapsedLabel: "high-quality companies found through web scraping, Exa, Clay, and hands-on research",
+    scanCollapsedLabel: "high-quality companies found through web scraping, Exa, LinkedIn, and hands-on research",
     excludeLabel: "Excluded up front"
   },
 
@@ -58,11 +58,11 @@ window.BUILD_DATA = {
 
   process: {
     lead: "We pointed our process at mid-market 3PLs and read every company it surfaced.",
-    foot: "Exa Websets · Clay · Claude · hands-on research",
+    foot: "Exa Websets · LinkedIn · Claude · hands-on research",
     stages: [
       { stage: "Discover", tools: ["Exa Websets"], bullets: ["Structured the ICP as search criteria", "Ran the webset across the segment", "Kept only companies clearing the structural gate"] },
       { stage: "Design the signals", tools: ["Claude"], bullets: ["Translated the wedge into four signals", "Weighted each by predictive strength", "Wrote the 0-5 rubric per signal"] },
-      { stage: "Enrich & verify", tools: ["Clay", "Exa"], bullets: ["Pulled firmographics and headcount", "Verified every claim against a source", "Dropped anything we could not cite"] },
+      { stage: "Enrich & verify", tools: ["LinkedIn", "Exa"], bullets: ["Pulled firmographics and headcount", "Verified every claim against a source", "Dropped anything we could not cite"] },
       { stage: "Score", tools: ["Claude"], bullets: ["Scored each account on all four axes", "Blended on your weights", "Ranked within this sample"] },
       { stage: "Map the way in", tools: ["Affinity", "LinkedIn"], bullets: ["Checked each account against Primary's graph", "Surfaced warm paths where they exist", "Named the connector on every line"] }
     ]
@@ -91,11 +91,11 @@ window.BUILD_DATA = {
 
   enrichments: [
     { field: "Distribution centers", src: "Company site" },
-    { field: "Headcount", src: "Clay" },
+    { field: "Headcount", src: "LinkedIn" },
     { field: "WMS vendor", src: "Exa" },
     { field: "Recent funding", src: "Exa" },
     { field: "Open ops roles", src: "Company careers" },
-    { field: "Executive contacts", src: "Clay" },
+    { field: "Executive contacts", src: "LinkedIn" },
     { field: "Parent ownership", src: "Exa" },
     { field: "Facility footprint", src: "Company site" }
   ],
@@ -104,10 +104,10 @@ window.BUILD_DATA = {
     ["1", "Company site", "Operates 6 distribution centers across the Midwest"],
     ["1", "Company careers", "Four warehouse operations roles open as of this month"],
     ["2", "Exa", "Announced a new fulfillment center in Q1"],
-    ["1", "Clay", "Headcount grew 18% year over year"],
+    ["1", "LinkedIn", "Headcount grew 18% year over year"],
     ["2", "Exa", "Runs a modern WMS with a published API"],
     ["1", "Company site", "Publicly named pick-rate as its growth constraint"],
-    ["2", "Clay", "VP of Operations hired within the last year"],
+    ["2", "LinkedIn", "VP of Operations hired within the last year"],
     ["1", "Company site", "Serves ecommerce brands with same-day commitments"],
     ["2", "Exa", "Parent company is privately held"]
   ],
@@ -137,7 +137,7 @@ window.BUILD_DATA = {
       s: { competitive_distress: 3, data_residency: 2, signal_score: 3, hiring: 2 },
       hq: "Tacoma, WA", ownership: "Private", wow: "Growing ecommerce mix",
       contact: { name: "Erin Cho", title: "Operations Manager" },
-      sources: [{ t: "Clay — headcount trend", tier: 2 }], srcCount: 5 }
+      sources: [{ t: "LinkedIn — headcount trend", tier: 2 }], srcCount: 5 }
   ],
 
   partners: [
