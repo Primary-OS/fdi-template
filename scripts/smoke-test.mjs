@@ -516,6 +516,32 @@ async function checkSegmentTabs(ctx, base) {
   }
 }
 
+// ── logo chip colour ────────────────────────────────────────────────────────
+// C7: the chip colour used to arrive as a {{LOGO_CHIP_BG}} token the agent
+// blanked before the engine could fill it. The dashboard now reads
+// founder.logoChipBg from build-data.js, in the shape build-logo-assets.mjs
+// writes it; without the key the chip keeps its default.
+async function checkLogoChip(ctx, base) {
+  const mock = readFileSync(path.join(HERE, "mock", "build-data.js"), "utf8");
+  const stamped = mock.replace(/cobrand:\s*"Primary",/, 'cobrand: "Primary",\n    logoChipBg: "#b80000",');
+  for (const c of [{ name: "stamped", body: stamped, want: "rgb(184, 0, 0)" }, { name: "absent", body: mock, want: null }]) {
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message || String(e)));
+    await page.route(`${base}/build-data.js`, (route) => route.fulfill({ contentType: "text/javascript", body: c.body }));
+    await page.goto(`${base}/dashboard.html`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(150);
+    const got = await page.evaluate(() => {
+      const chip = document.querySelector(".logo-mark");
+      return { inline: chip ? chip.style.backgroundColor : "(no chip)", token: /\{\{LOGO_CHIP_BG\}\}/.test(document.documentElement.outerHTML) };
+    });
+    const ok = errors.length === 0 && !got.token && (c.want ? got.inline === c.want : got.inline === "");
+    add(`dashboard logo chip (${c.name}): ${c.want ? "tinted from build-data.js" : "keeps the default"}`, ok,
+      errors.length ? `page error: ${errors[0]}` : `inline background "${got.inline}"${got.token ? "; LOGO_CHIP_BG token still in the page" : ""}`);
+    await page.close();
+  }
+}
+
 // ── D1 sensitive-phrase policy ──────────────────────────────────────────────
 // C6: the template's own schema comment ("memo, calls, diligence") and this
 // conforming mock ("Your memo", "Diligence notes") modelled copy the engine's D1
@@ -606,6 +632,7 @@ try {
   await checkPartners(ctx, server.url);
   await checkHeroValues(ctx, server.url);
   await checkSegmentTabs(ctx, server.url);
+  await checkLogoChip(ctx, server.url);
   await ctx.close();
   checkD1(dir);
 } finally {
