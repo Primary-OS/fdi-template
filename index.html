@@ -1110,7 +1110,7 @@ function computeJobSignal(c){
     return !/\/careers\/?$|\/careers\.html$|\/careers-home\/?$|^https?:\/\/jobs\.[a-z]+\.com\/?$|\/careers\/jobs\/all\/?$|\/company\/careers\/?$|\/careers\/$|careers\/apply-now/.test(url);
   });
   // The per-build hiring-keyword regex arrives as a SOURCE STRING (no slashes, 'i'
-  // applied here), never as a bare regex literal: an unsubstituted {{token}} in
+  // applied here), never as a bare regex literal: an unsubstituted template token in
   // executable position is a SyntaxError that kills this whole script - the entire
   // dashboard rendered blank on the raw template until 8/17 because of exactly that.
   // An intact token or a bad pattern falls back to the generic office-roles regex,
@@ -1218,7 +1218,10 @@ var DISPLAY_FLOOR = 70, DISPLAY_TOP = 100, MIN_SPREAD = 10;
   var chip=document.querySelector('.logo-mark');
   if(chip&&window.fetch){
     fetch('./build-data.js',{cache:'no-store'}).then(function(r){return r.ok?r.text():'';}).then(function(t){
-      var m=/\blogoChipBg\s*:\s*["'](#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\([^)"']{1,40}\))["']/.exec(t||'');
+      // Comments stripped first: the schema's commented-out example
+      // (logoChipBg with a sample hex) must never paint the chip (R-CT5).
+      t=String(t||'').replace(/\/\*[\s\S]*?\*\//g,'').replace(/^[ \t]*\/\/.*$/gm,'');
+      var m=/\blogoChipBg\s*:\s*["'](#[0-9a-fA-F]{3,8}|(?:rgb|hsl)a?\([^)"']{1,40}\))["']/.exec(t);
       if(m)chip.style.background=m[1];
     }).catch(function(){});
   }

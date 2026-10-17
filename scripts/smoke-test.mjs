@@ -30,6 +30,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(HERE, "..");
 const KEEP = process.argv.includes("--keep");
 const VERBOSE = process.argv.includes("--verbose");
+// Where an fdi-engine checkout may live: FDI_ENGINE_DIR first, then the usual
+// siblings. The browser library, the D1 policy and the copy validator all
+// resolve from this one list (R-CT6: only the validator honoured the env var).
+const ENGINE_DIRS = [process.env.FDI_ENGINE_DIR, "../fdi-engine", "../../CascadeProjects/fdi-engine", "../../fdi-engine"].filter(Boolean);
 
 /* ── copy rules enforced on RENDERED text (Jason, 8/17) ──────────────────────
    These are the phrases the founder review kept striking out. They are checked
@@ -74,7 +78,7 @@ function serveDir(dir) {
 // optional for anyone who just wants to edit HTML.
 async function importPlaywright() {
   const tries = ["playwright-core"];
-  for (const sib of ["../fdi-engine", "../../CascadeProjects/fdi-engine", "../../fdi-engine"]) {
+  for (const sib of ENGINE_DIRS) {
     const p = path.resolve(ROOT, sib, "node_modules/playwright-core/index.js");
     if (existsSync(p)) tries.push(p);
   }
@@ -525,7 +529,10 @@ async function checkSegmentTabs(ctx, base) {
 async function checkLogoChip(ctx, base) {
   const mock = readFileSync(path.join(HERE, "mock", "build-data.js"), "utf8");
   const stamped = mock.replace(/cobrand:\s*"Primary",/, 'cobrand: "Primary",\n    logoChipBg: "#b80000",');
-  for (const c of [{ name: "stamped", body: stamped, want: "rgb(184, 0, 0)" }, { name: "absent", body: mock, want: null }]) {
+  // R-CT5: an agent that keeps the schema's commented-out example must not get
+  // the example colour painted on the chip.
+  const commented = mock.replace(/cobrand:\s*"Primary",/, 'cobrand: "Primary",\n    // logoChipBg: "#b80000",\n    /* logoChipBg: "#00b800", */');
+  for (const c of [{ name: "stamped", body: stamped, want: "rgb(184, 0, 0)" }, { name: "absent", body: mock, want: null }, { name: "commented-out example", body: commented, want: null }]) {
     const page = await ctx.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push(e.message || String(e)));
@@ -555,7 +562,7 @@ const D1_FALLBACK = {
   allow: ["\\bmemory\\b", "\\bmemo(?:rial|rable|ize|randum of understanding)\\b", "\\b(?:due|in|under|enters?|entered|entering)[- ](?:due[- ])?diligence\\b"],
 };
 function loadD1Policy() {
-  for (const sib of ["../fdi-engine", "../../CascadeProjects/fdi-engine", "../../fdi-engine"]) {
+  for (const sib of ENGINE_DIRS) {
     const p = path.resolve(ROOT, sib, "scripts/fdi/sensitive-policy.json");
     if (existsSync(p)) { try { return { policy: JSON.parse(readFileSync(p, "utf8")), from: p }; } catch { /* fall through */ } }
   }
@@ -576,6 +583,25 @@ function d1Violations(text, policy) {
   }
   return out;
 }
+// R-CT4: a comment in a file the agent copies (schema templates, data.js) that
+// quotes an uppercase double-brace placeholder survives substitution when it is
+// not a real token, and every engine token sweep then fails the build. Real
+// tokens are allowed only where the skill substitutes them.
+function checkCommentPlaceholders() {
+  const hits = [];
+  for (const f of ["build-data-template.js", "competitors-data-template.js", "data.js", "build.html"]) {
+    const fp = path.join(ROOT, f);
+    if (!existsSync(fp)) continue;
+    readFileSync(fp, "utf8").split("\n").forEach((line, i) => {
+      const at = line.search(/\/\/|\/\*|^\s*\*/);
+      if (at < 0) return;
+      const m = line.slice(at).match(/\{\{[A-Z0-9_]+\}\}/);
+      if (m) hits.push(`${f}:${i + 1} ${m[0]}`);
+    });
+  }
+  add("no double-brace placeholder inside a comment of a copied schema file", hits.length === 0, hits.length ? hits.join("; ") : "clean");
+}
+
 function checkD1(dir) {
   const { policy, from } = loadD1Policy();
   // Everything the staged build would deploy, plus the two schema files agents
@@ -596,8 +622,7 @@ function checkD1(dir) {
 // data.js never names, and failed four citation checks. Runs only when an engine
 // checkout is found (FDI_ENGINE_DIR, or a sibling fdi-engine).
 function checkEngineCopyGate(dir) {
-  const cands = [process.env.FDI_ENGINE_DIR, "../fdi-engine", "../../CascadeProjects/fdi-engine", "../../fdi-engine"]
-    .filter(Boolean).map((d) => path.resolve(ROOT, d, "scripts/fdi/lib/validate-gtm-data.mjs"));
+  const cands = ENGINE_DIRS.map((d) => path.resolve(ROOT, d, "scripts/fdi/lib/validate-gtm-data.mjs"));
   const v = cands.find((p) => existsSync(p));
   if (!v) { add("mock passes the engine copy validator", true, "skipped - no engine checkout (set FDI_ENGINE_DIR)"); return; }
   const r = spawnSync(process.execPath, [v, dir], { encoding: "utf8" });
@@ -652,6 +677,7 @@ try {
   await checkLogoChip(ctx, server.url);
   await ctx.close();
   checkD1(dir);
+  checkCommentPlaceholders();
   checkEngineCopyGate(dir);
 } finally {
   if (browser) await browser.close().catch(() => {});

@@ -50,7 +50,7 @@ window.BUILD_DATA = {
     // ---- logo -------------------------------------------------------------
     // SET logoSvg YOURSELF: the same inline <svg> mark as the dashboard's
     // PRODUCT_LOGO_SVG, or "" if there is none. Never leave the token: ANY
-    // leftover {{TOKEN}} in this file makes the engine's backfill discard the
+    // leftover double-brace placeholder in this file makes the engine's backfill discard the
     // whole file for a skeleton backstop with no process, axes or partners (C3).
     // When the founder uploaded a logo, fdi-engine scripts/fdi/build-logo-assets.mjs
     // then overwrites logoSvg and adds the keys below; do not write those yourself.
