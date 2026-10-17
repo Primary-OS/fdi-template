@@ -45,13 +45,16 @@ window.BUILD_DATA = {
     cobrand: "Primary",
     fileNo: "",                          // optional "FDI-###" badge; "" hides it
     hero3d: "",                          // optional named 3D object for the opener ("lantern" available); omit = neon-tube render of logoSvg
-    tagline: "{{PRODUCT_TAGLINE}}",       // renders above introHeadline in beat 1; set "" if it would restate the headline (anti-duplication)
-    oneLine: "{{PRODUCT_ONELINE}}",
+    tagline: "{{PRODUCT_TAGLINE}}",       // REPLACE (no token may survive): renders above introHeadline in beat 1; set "" if it would restate the headline (anti-duplication)
+    oneLine: "{{PRODUCT_ONELINE}}",       // REPLACE (no token may survive)
     // ---- logo -------------------------------------------------------------
-    // AUTO-FILLED by the build when the founder uploaded a logo
-    // (fdi-engine scripts/fdi/build-logo-assets.mjs turns one file into all of
-    // these). Leave them alone unless you are hand-finishing a build.
-    logoSvg: '{{PRODUCT_LOGO_SVG}}',     // inline SVG (24x24 viewBox) OR an <img> at the generated square icon
+    // SET logoSvg YOURSELF: the same inline <svg> mark as the dashboard's
+    // PRODUCT_LOGO_SVG, or "" if there is none. Never leave the token: ANY
+    // leftover {{TOKEN}} in this file makes the engine's backfill discard the
+    // whole file for a skeleton backstop with no process, axes or partners (C3).
+    // When the founder uploaded a logo, fdi-engine scripts/fdi/build-logo-assets.mjs
+    // then overwrites logoSvg and adds the keys below; do not write those yourself.
+    logoSvg: '{{PRODUCT_LOGO_SVG}}',     // inline SVG (24x24 viewBox); the engine may swap in an <img> at the generated square icon
     // logoMarkWhite: white-on-transparent silhouette for the ghost mark behind
     // the intro. ABSENT when the build could not derive one it trusted - the
     // ghost falls back to logoSvg, which is plain but never a coloured smear.
@@ -90,7 +93,8 @@ window.BUILD_DATA = {
                                          // <= 6 words, no null after backfill (gate). Founder-facing first (SKILL Rule 38):
                                          // what the market is to THEM, what sits behind the sample, who to talk to.
                                          // Five long labels wrapped to two rows on Plexa (10/13); Alex cut to three.
-      { n: 0, label: "in your ICP (your sizing)" },                  // scan.universe, in the founder's own sizing
+      { n: 0, label: "in your ICP (your sizing)" },                  // scan.universe, in the founder's own sizing.
+                                         // n may carry up to 2 decimals and renders as written: { n: 2.5, suffix: "M" } -> "2.5M" (C12).
       { n: 10, label: "accounts researched in depth" },
       { n: null, label: "named contacts" }               // optional third slot. WRITE null: backfill-build-data.mjs stamps the
                                                          // derived value after the Affinity fetch, or swaps in a cited-sources
@@ -114,7 +118,9 @@ window.BUILD_DATA = {
 
   // ---- act 02: derive the ICP ----------------------------------------------
   icp: {
-    read: [ { label: "", meta: "" } ],   // 4 items: memo, calls, diligence, own research
+    read: [ { label: "", meta: "" } ],   // 4 items: founder materials, calls, Primary research, public sources.
+                                         // Never an investor-process word the D1 deploy gate denies (engine sensitive-policy.json;
+                                         // Frost shipped two in these labels). Comments count: D1 reads the whole file.
     qualifier: [ "" ],                   // 5 plain checkable criteria
     buyer: "",                           // exact buyer title
     geo: ""
@@ -186,11 +192,14 @@ window.BUILD_DATA = {
       sources: [ { t: "Source — claim", tier: 1 } ], srcCount: 0 }
   ],
 
-  // status is shown as written. The heading above the cards follows it: every status
-  // signed / onboarding / live / customer -> "Already signed & onboarding"; some ->
-  // "Signed & in the pipeline"; none -> "Already in the pipeline". Never call a
+  // status is shown as written and LEADS with the state. The heading above the
+  // cards follows it: every status signed -> "Already signed & onboarding"; some ->
+  // "Signed & in the pipeline"; none -> "Already in the pipeline". Signed means the
+  // status OPENS with signed / onboarded / onboarding / live / customer and has no
+  // negation or pre-contract word (not, yet, LOI, pilot, trial, prospective,
+  // discovery...); "pipeline - LOI not yet signed" is pipeline (C9). Never call a
   // pipeline account signed. [] hides the block.
-  partners: [ { name: "", status: "", note: "" } ],  // signed / onboarding / pipeline
+  partners: [ { name: "", status: "", note: "" } ],  // "signed", "onboarding", "pipeline - LOI in review"
 
   // ---- act 08: the warm-path network ----------------------------------------
   // Connectors are ROLE-BASED and illustrative unless real Affinity data is

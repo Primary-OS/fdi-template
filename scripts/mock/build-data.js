@@ -40,9 +40,9 @@ window.BUILD_DATA = {
 
   icp: {
     read: [
-      { label: "Your memo", meta: "Series A deck, 2026" },
+      { label: "Founder deck + company materials", meta: "Series A deck, 2026" },
       { label: "Buyer calls", meta: "3 recorded calls" },
-      { label: "Diligence notes", meta: "Shared workspace" },
+      { label: "Primary research", meta: "Shared workspace" },
       { label: "Our own research", meta: "Category teardown" }
     ],
     qualifier: [
