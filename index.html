@@ -635,6 +635,41 @@ a{color:inherit;}
 .nm-d-evt-sub{font-size:10.5px;color:var(--text-muted);margin-top:3px;line-height:1.4;}
 .nm-d-tag{font-size:8.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--green-tint);color:var(--green-deep);border:1px solid var(--green-ring);border-radius:9999px;padding:1px 7px;margin-left:auto;}
 .nm-d-foot-note{font-size:9.5px;color:var(--text-faint);line-height:1.45;margin-top:7px;}
+/* Person + connector card, standardized 2026-11-02: one type scale (11 / 12.5 / 15 / 24px),
+   an 8px spacing grid, sentence case labels, and no mono or all-caps text. */
+.nm-detail{width:320px;padding:16px;}
+.nm-detail .nm-d-head{gap:12px;margin-bottom:12px;padding-right:20px;}
+.nm-d-close{top:10px;right:10px;font-size:18px;}
+.nm-d-av{width:36px;height:36px;font-size:12.5px;}
+.nm-d-name{font-size:15px;font-weight:650;line-height:1.3;gap:6px;}
+.nm-d-title{font-size:12.5px;line-height:1.4;margin-top:2px;}
+.nm-d-li{font-family:var(--font-sans);font-size:11px;font-weight:600;border:1px solid var(--border-mid);border-radius:6px;padding:0 6px;line-height:18px;}
+.nm-d-scorebox{margin-left:auto;text-align:right;flex-shrink:0;}
+.nm-d-score{display:block;margin-left:0;font-size:24px;}
+.nm-d-pct{font-size:12.5px;}
+.nm-d-score-lbl{display:block;font-size:11px;color:var(--text-faint);margin-top:4px;}
+.nm-d-rel{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.45;color:var(--text);padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);margin-bottom:12px;}
+.nm-d-rel::before{content:'';width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0;background:var(--nm-w-hi);}
+.nm-d-rel.ext::before{background:var(--teal);}
+.nm-d-rel.li{color:var(--text-muted);}
+.nm-d-rows{gap:8px;}
+.nm-d-row{font-size:12.5px;gap:12px;line-height:1.4;}
+.nm-d-row>span{white-space:nowrap;}
+.nm-d-sec-lbl{font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text-muted);margin:16px 0 8px;}
+.nm-d-why{font-size:12.5px;padding:12px;}
+.nm-detail .nm-d-why{margin:16px 0 0;}
+.nm-d-why-lbl{font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text-muted);margin-bottom:4px;}
+.nm-d-evt{padding:8px 12px;margin-bottom:8px;}
+.nm-d-evt-top{justify-content:space-between;gap:8px;flex-wrap:nowrap;font-size:11px;}
+.nm-d-evt-lbl{font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text-muted);min-width:0;}
+.nm-d-evt-date{font-size:12.5px;font-weight:600;color:var(--text);margin-top:2px;}
+.nm-d-evt-date span{font-weight:400;color:var(--text-muted);}
+.nm-d-evt-sub{font-size:12px;margin-top:2px;}
+.nm-d-tag{font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;line-height:18px;padding:0 8px;margin-left:0;white-space:nowrap;}
+.nm-d-foot-note{font-size:11px;margin-top:8px;}
+@media (max-width:640px){
+  .nm-detail{position:fixed;left:8px;right:8px;top:auto;bottom:8px;width:auto;max-height:75vh;z-index:60;}
+}
 /* expandable list rows */
 .nm-path-row.nm-expandable{cursor:pointer;transition:border-color 120ms;}
 .nm-path-row.nm-expandable:hover{border-color:var(--border-mid);}
@@ -897,7 +932,7 @@ a{color:inherit;}
       <div>
         <div class="context-eyebrow">Network map · warm paths from Affinity</div>
         <h1 class="context-h1">Who at Primary can open the door</h1>
-        <p class="context-sub">Per target account: which Primary connectors reach a contact at or near the company, warmth-scored 0–100.</p>
+        <p class="context-sub">Per target account: which Primary connectors reach a contact at the company, warmth-scored 0–100. Investors, board members and advisors are labelled.</p>
       </div>
     </div>
 
@@ -2279,7 +2314,7 @@ function getAllCompaniesFlat(){
     // "dot size = seniority · ringed dot = …" sentence with at-a-glance swatches.
     var vizkey='<div class="nm-vizkey">' +
       '<div class="nm-vk-row"><span class="nm-vk-dot ring"></span>Works at the company</div>' +
-      '<div class="nm-vk-row"><span class="nm-vk-dot"></span>At another company</div>' +
+      '<div class="nm-vk-row"><span class="nm-vk-dot"></span>Board member or advisor (labelled)</div>' +
       '<div class="nm-vk-row"><span class="nm-vk-dot sm"></span><span class="nm-vk-dot lg"></span>Larger = more senior</div>' +
     '</div>';
     // legend bar above the graph carries the warmth color key + Map/List toggle only
@@ -2287,6 +2322,12 @@ function getAllCompaniesFlat(){
     return legendFull + '<div class="nm-graph-wrap">'+(controlsHtml||'')+zoom+vizkey+svg+'<div class="nm-detail" id="nm-detail" style="display:none;"></div></div>';
   }
 
+  // Explicit tie to the account. `relationship_label` is set per build in
+  // network-data.js; anyone who is not a plain employee says what they are
+  // (investor at the venture arm, board member, advisor) instead of looking
+  // like an employee.
+  function relLabel(p){ return p && p.relationship_label ? String(p.relationship_label) : ''; }
+  function isNonEmployee(p){ return !!(p && p.relationship && p.relationship!=='employee'); }
   function withCo(p,co){ var d={}; for(var k in p) d[k]=p[k]; d.company=co; return d; }
 
   // company-centric: target company at center, Primary connectors as hubs
@@ -2306,7 +2347,7 @@ function getAllCompaniesFlat(){
       if(!mine.length) return null;
       return { label:name, hubText:flabel(name), initials:initials(name), domain:null, clickKind:'connector', clickId:name,
         items:mine.map(function(p){ var data=withCo(p,c.company); data.connectors=full[contactKey(p)]||p.connectors; return { label:p.contact_name, score:p.score, type:p.type, seniority:p.seniority, ring:!!p.at_target_company, data:data,
-          tooltip:p.contact_name+(p.contact_title?' — '+p.contact_title:'')+' · '+(p.score===null?'LinkedIn only':'warmth '+p.score)+' · via '+name+(p.at_target_company?'':' · '+(p.contact_affiliation||'external')) }; }) };
+          tooltip:p.contact_name+(p.contact_title?' — '+p.contact_title:'')+' · '+(p.score===null?'LinkedIn only':'warmth '+p.score)+' · via '+name+(isNonEmployee(p)?' · '+relLabel(p):(p.at_target_company?'':' · '+(p.contact_affiliation||'external'))) }; }) };
     }).filter(Boolean);
     var pickOpts=[['all','All connectors']].concat(allConns.map(function(n){return [n,n];}));
     return radialGraph({label:c.company, domain:domainFor(c), initials:initials(c.company)}, groups,
@@ -2325,7 +2366,7 @@ function getAllCompaniesFlat(){
       var ps=co.paths.filter(nmPass); if(!ps.length) return null;
       return { label:co.company, hubText:trunc(co.company,15), initials:initials(co.company), domain:co.domain, clickKind:'company', clickId:co.company,
         items:ps.map(function(p){ return { label:p.contact_name, score:p.score, type:p.type, seniority:p.seniority, ring:!!p.at_target_company, data:withCo(p,co.company),
-          tooltip:p.contact_name+(p.contact_title?' — '+p.contact_title:'')+' · '+(p.score===null?'LinkedIn only':'warmth '+p.score)+' · at '+co.company }; }) };
+          tooltip:p.contact_name+(p.contact_title?' — '+p.contact_title:'')+' · '+(p.score===null?'LinkedIn only':'warmth '+p.score)+(isNonEmployee(p)?' · '+relLabel(p):' · at '+co.company) }; }) };
     }).filter(Boolean);
     var pickOpts=[['all','All companies']].concat(allCos.map(function(n){return [n,n];}));
     return radialGraph({label:conn.name, domain:null, initials:initials(conn.name)}, groups,
@@ -2400,14 +2441,15 @@ function getAllCompaniesFlat(){
     opts=opts||{};
     var who='';
     if(e.from_internal===true)  who = e.from_name ? esc(e.from_name)+' reached out' : 'Primary reached out';
-    if(e.from_internal===false) who = 'they wrote to us';
+    if(e.from_internal===false) who = 'They wrote to us';
     var sub = e.label ? esc(e.label) : (e.label===null && opts.mayMask ? '<i>subject private</i>' : '');
     var bits=[fmtD(e.date)]; var rel=relDate(e.date);
     if(rel && opts.rel) bits.push(rel);
     return '<div class="nm-d-evt'+(opts.next?' nm-d-next':'')+'">' +
-      '<div class="nm-d-evt-top"><span class="nm-d-evt-lbl">'+label+'</span><b>'+bits.join(' · ')+'</b>' +
-        (e.with_connector?'<span class="nm-d-tag">with '+esc(fname(conn))+'</span>':'') +
+      '<div class="nm-d-evt-top"><span class="nm-d-evt-lbl">'+label+'</span>' +
+        (e.with_connector?'<span class="nm-d-tag">With '+esc(fname(conn))+'</span>':'') +
       '</div>' +
+      '<div class="nm-d-evt-date">'+esc(bits[0])+(bits[1]?' <span>· '+esc(bits[1])+'</span>':'')+'</div>' +
       ((who||sub)?'<div class="nm-d-evt-sub">'+[who,sub].filter(Boolean).join(' — ')+'</div>':'') +
     '</div>';
   }
@@ -2434,7 +2476,7 @@ function getAllCompaniesFlat(){
       evtRow('Last meeting', h.last_meeting, d.connector, {rel:true}) +
       (h.last_chat&&h.last_chat.date? evtRow('Last chat message', h.last_chat, d.connector, {rel:true}) : '') +
       evtRow('Next meeting', h.next_meeting, d.connector, {next:true}) +
-      '<div class="nm-d-foot-note">Affinity history between '+esc(fname(d.contact_name))+' and anyone at Primary; “with '+esc(fname(d.connector))+'” marks '+esc(fname(d.connector))+'’s own threads. Per-relationship email counts aren’t exposed by Affinity’s API.</div>';
+      '<div class="nm-d-foot-note">From Affinity: '+esc(fname(d.contact_name))+'’s history with anyone at Primary. “With '+esc(fname(d.connector))+'” marks '+esc(fname(d.connector))+'’s own threads.</div>';
   }
   // expanded content for a (possibly grouped) contact row. One connector -> the
   // usual why + history. Multiple -> one section per connector, warmest first,
@@ -2471,29 +2513,30 @@ function getAllCompaniesFlat(){
       : '<span class="nm-d-score '+t.key+'">'+d.score+'<span class="nm-d-pct">%</span></span>';
     var liHref=safeUrl(d.linkedin_url);
     var liInline = liHref ? ' <a class="nm-d-li" href="'+esc(liHref)+'" target="_blank" rel="noopener">in ↗</a>' : '';
-    var aff = d.at_target_company ? ('Works at '+esc(d.company))
+    var aff = relLabel(d) ? esc(relLabel(d)) : d.at_target_company ? ('Works at '+esc(d.company))
       : ('At '+esc(d.contact_affiliation||'another company')+' — not a current '+esc(d.company)+' employee');
     var hist=historyHtml(d);
     var connNames=(d.connectors&&d.connectors.length? d.connectors.map(function(x){return x.connector;}) : [d.connector]).filter(Boolean);
 
+    var relCls = isLi ? 'li' : (relLabel(d) && d.relationship!=='employee') || !d.at_target_company ? 'ext' : '';
+    var senTxt = d.seniority==='IC' ? 'Individual contributor' : d.seniority;
+    var liTxt = d.linkedin_connected ? ('Connected'+(d.linkedin_connected_on?' '+esc(fmtD(d.linkedin_connected_on)||''):'')) : 'Not connected';
     box.innerHTML =
       '<button class="nm-d-close" type="button" aria-label="Close">×</button>' +
       '<div class="nm-d-head"><div class="nm-d-av">'+esc(initials(d.contact_name))+'</div>' +
         '<div style="flex:1;min-width:0;"><div class="nm-d-name">'+esc(d.contact_name)+liInline+'</div>' +
-        (d.contact_title?'<div class="nm-d-title">'+esc(d.contact_title)+'</div>':'')+'</div>'+scoreHtml +
+        (d.contact_title?'<div class="nm-d-title">'+esc(d.contact_title)+'</div>':'')+'</div>' +
+        '<div class="nm-d-scorebox">'+scoreHtml+'<span class="nm-d-score-lbl">'+(isLi?'LinkedIn only':'Warmth')+'</span></div>' +
       '</div>' +
-      '<div class="nm-d-badges">' +
-        '<span class="nm-badge '+(d.at_target_company?'sen':'aff')+'">'+aff+'</span>' +
-        (d.seniority?'<span class="nm-badge sen">'+esc(d.seniority)+'</span>':'') +
-        (isLi?'<span class="nm-badge li">LinkedIn only</span>':'') +
-      '</div>' +
-      whyHtml(d) +
-      hist +
-      '<div class="nm-d-rows" style="margin-top:'+(hist?'11px':'0')+';">' +
+      '<div class="nm-d-rel '+relCls+'">'+aff+'</div>' +
+      '<div class="nm-d-rows">' +
         '<div class="nm-d-row"><span>'+(connNames.length>1?'Can intro':'Reached via')+'</span><b>'+esc(connNames.join(', '))+'</b></div>' +
         (d.last_contact?'<div class="nm-d-row"><span>Last contact</span><b>'+esc(relDate(d.last_contact)||d.last_contact)+'</b></div>':'') +
-        '<div class="nm-d-row"><span>LinkedIn</span><b>'+(d.linkedin_connected?('connected'+(d.linkedin_connected_on?' '+esc(fmtD(d.linkedin_connected_on)||''):'')):'—')+'</b></div>' +
-      '</div>';
+        (senTxt?'<div class="nm-d-row"><span>Seniority</span><b>'+esc(senTxt)+'</b></div>':'') +
+        '<div class="nm-d-row"><span>LinkedIn</span><b>'+liTxt+'</b></div>' +
+      '</div>' +
+      whyHtml(d) +
+      hist;
     box.style.display='block';
     wireCardDismiss(box);
   }
@@ -2508,15 +2551,15 @@ function getAllCompaniesFlat(){
     var liHref=safeUrl(meta.linkedin);
     var liInline = liHref ? ' <a class="nm-d-li" href="'+esc(liHref)+'" target="_blank" rel="noopener">in ↗</a>' : '';
     var sub = meta.title ? esc(meta.title)+(meta.org?' · '+esc(meta.org):'') : (meta.org?esc(meta.org):'Primary');
+    // Affinity location is an object ({city,state,country}); older builds stored a string.
+    var loc=meta.location, locTxt = !loc ? '' : typeof loc==='string' ? loc
+      : [loc.city, loc.state&&loc.state!==loc.city?loc.state:null].filter(Boolean).join(', ') || loc.country || '';
     box.innerHTML =
       '<button class="nm-d-close" type="button" aria-label="Close">×</button>' +
       '<div class="nm-d-head"><div class="nm-d-av">'+esc(initials(name))+'</div>' +
         '<div style="flex:1;min-width:0;"><div class="nm-d-name">'+esc(name)+liInline+'</div>' +
         '<div class="nm-d-title">'+sub+'</div></div></div>' +
-      '<div class="nm-d-badges">' +
-        '<span class="nm-badge sen">Primary connector</span>' +
-        (meta.location?'<span class="nm-badge">'+esc(meta.location)+'</span>':'') +
-      '</div>' +
+      '<div class="nm-d-rel">Primary connector'+(locTxt?' · '+esc(locTxt):'')+'</div>' +
       '<div class="nm-d-rows" style="margin-top:11px;">' +
         '<div class="nm-d-row"><span>Warm contacts</span><b>'+total+'</b></div>' +
         '<div class="nm-d-row"><span>ICP companies reached</span><b>'+ncos+'</b></div>' +
@@ -2592,7 +2635,9 @@ function getAllCompaniesFlat(){
         var scoreTxt=isLi?'—':(g.score+'%');
         var scoreCls=isLi?'lo':t.key;
         var badges='';
-        if(!g.at_target_company){
+        if(isNonEmployee(g)){
+          badges += '<span class="nm-badge aff">'+esc(relLabel(g))+'</span>';
+        } else if(!g.at_target_company){
           badges += '<span class="nm-badge aff" title="Not a current employee of '+esc(c.company)+'">'+esc((g.contact_title?g.contact_title+' @ ':'')+ (g.contact_affiliation||'external'))+'</span>';
         }
         if(isLi){ badges += '<span class="nm-badge li">LinkedIn only</span>'; }
@@ -2956,7 +3001,7 @@ function getAllCompaniesFlat(){
             var liHref=safeUrl(p.linkedin_url);
             var li=liHref?'<a class="nm-li-link" href="'+esc(liHref)+'" target="_blank" rel="noopener">in ↗</a>':'';
             var lk=_nmList.length; _nmList.push(withCo(p, co.company));
-            var sub=[p.contact_title, p.at_target_company?'':(p.contact_affiliation||'external')].filter(Boolean).join(' · ');
+            var sub=[p.contact_title, isNonEmployee(p)?relLabel(p):(p.at_target_company?'':(p.contact_affiliation||'external'))].filter(Boolean).join(' · ');
             return '<div class="nm-path-row nm-expandable'+(isLi?' nm-li':'')+'" data-lk="'+lk+'" style="margin-bottom:6px;">' +
               '<div class="nm-path-av">'+esc(initials(p.contact_name))+'</div>' +
               '<div class="nm-path-main"><div class="nm-path-name">'+esc(p.contact_name)+' '+li+'</div>' +
@@ -3055,7 +3100,7 @@ function getAllCompaniesFlat(){
     var ties=_t10Ties(p._key);
     var lu=safeUrl(p.linkedin_url); var li=lu?'<a class="nm-t10-li" href="'+esc(lu)+'" target="_blank" rel="noopener" style="font-size:12.5px;">in ↗</a>':'';
     var badges='<div class="nm-d-badges" style="margin:6px 0 2px;">'+
-      '<span class="nm-badge">'+(p.at_target_company?'Works at '+esc(p.company):esc(p.contact_affiliation||'Affiliation unknown'))+'</span>'+
+      '<span class="nm-badge">'+(relLabel(p)?esc(relLabel(p)):p.at_target_company?'Works at '+esc(p.company):esc(p.contact_affiliation||'Affiliation unknown'))+'</span>'+
       (p.seniority?'<span class="nm-badge sen">'+esc(p.seniority)+'</span>':'')+'</div>';
     var tieRows=ties.map(function(t){
       var cm=meta[t.connector]||{};
@@ -3220,7 +3265,7 @@ function getAllCompaniesFlat(){
         var isT10=!!t10set[_t10Key(p)];
         var liHref=safeUrl(p.linkedin_url);
         var acc = isLi?'var(--nm-w-null)':t.color;
-        var sub=[p.contact_title, p.at_target_company?'':(p.contact_affiliation||'external')].filter(Boolean).join(' · ');
+        var sub=[p.contact_title, isNonEmployee(p)?relLabel(p):(p.at_target_company?'':(p.contact_affiliation||'external'))].filter(Boolean).join(' · ');
         var cnames=(p.connectors||[p]).map(function(x){return x.connector;});
         var connCell=esc(cnames.slice(0,2).join(', '))+(cnames.length>2?' <span class="ct-conn-more" title="'+esc(cnames.join(', '))+'">+'+(cnames.length-2)+'</span>':'');
         html += '<tr class="ct-row'+(isT10?' ct-top10':'')+'" data-lk="'+lk+'">' +
@@ -3311,11 +3356,11 @@ function getAllCompaniesFlat(){
   function exportCsv(keys){
     if(!keys.length) return;
     var byKey={}; allContactRows().forEach(function(p){ byKey[p._key]=p; });
-    var head=['Name','Title','Company','Connectors','Best warmth','Last contact','Works at target','LinkedIn'];
+    var head=['Name','Title','Company','Connectors','Best warmth','Last contact','Relationship','LinkedIn'];
     var lines=[head.map(csvCell).join(',')];
     keys.forEach(function(k){ var p=byKey[k]; if(!p) return;
       var conns=(p.connectors||[p]).map(function(x){ return x.connector+(x.score!=null?' ('+x.score+')':''); }).join('; ');
-      lines.push([p.contact_name,p.contact_title||'',p.company,conns,(p.score==null?'LinkedIn only':p.score),p.last_contact||'',(p.at_target_company?'yes':'no'),safeUrl(p.linkedin_url)||''].map(csvCell).join(','));
+      lines.push([p.contact_name,p.contact_title||'',p.company,conns,(p.score==null?'LinkedIn only':p.score),p.last_contact||'',(relLabel(p)||(p.at_target_company?'yes':'no')),safeUrl(p.linkedin_url)||''].map(csvCell).join(','));
     });
     var blob=new Blob([lines.join('\n')],{type:'text/csv'});
     var url=URL.createObjectURL(blob), a=document.createElement('a');
