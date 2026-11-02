@@ -477,6 +477,7 @@ a{color:inherit;}
 .nm-t10-sc{flex:none;font-family:var(--font-mono, monospace);font-size:12px;font-weight:700;color:var(--purple);background:var(--purple-tint);border:1px solid var(--purple-ring);border-radius:999px;padding:3px 9px;}
 .nm-t10-li{flex:none;font-size:11px;color:var(--purple);text-decoration:none;}
 
+/* FDI:NETWORK-CSS:BEGIN - Network + Contacts CSS, replaced from fdi-template on every network module refresh (fdi-engine scripts/fdi/sync-network-renderer.mjs); edit it here, never per build. */
 /* === NETWORK MAP === */
 .network-grid{display:grid;grid-template-columns:300px 1fr;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface);min-height:520px;}
 .network-list{border-right:1px solid var(--border);max-height:680px;overflow-y:auto;background:var(--bg);}
@@ -828,6 +829,7 @@ a{color:inherit;}
 .nm-empty-state .nm-es-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;}
 .nm-empty-state .nm-es-body{font-size:12.5px;color:var(--text-muted);line-height:1.55;max-width:420px;margin:0 auto;}
 
+/* FDI:NETWORK-CSS:END */
 /* === Mobile === */
 @media(max-width:1100px){
   .work-grid{grid-template-columns:1fr;}
@@ -926,6 +928,7 @@ a{color:inherit;}
 
   </div>
 
+  <!-- FDI:NETWORK-HTML:BEGIN - Network + Contacts views, replaced from fdi-template on every network module refresh (fdi-engine scripts/fdi/sync-network-renderer.mjs); edit it here, never per build. -->
   <!-- NETWORK VIEW -->
   <div id="view-network" style="display:none;">
     <div class="context-strip">
@@ -1001,6 +1004,7 @@ a{color:inherit;}
     <div class="ct-bulk" id="ct-bulk"></div>
   </div>
 
+  <!-- FDI:NETWORK-HTML:END -->
   <!-- COMPANY DETAIL VIEW -->
   <div id="view-detail" style="display:none;">
     <div class="breadcrumb" id="detail-breadcrumb"></div>
@@ -1896,6 +1900,7 @@ function switchTab(tab){
   window.scrollTo(0,0);
 }
 
+// FDI:NETWORK-JS:BEGIN - Network + Contacts renderer, replaced from fdi-template on every network module refresh (fdi-engine scripts/fdi/sync-network-renderer.mjs); edit it here, never per build.
 // === NETWORK MAP ===
 function getAllCompaniesFlat(){
   var all=[];
@@ -2314,7 +2319,7 @@ function getAllCompaniesFlat(){
     // "dot size = seniority · ringed dot = …" sentence with at-a-glance swatches.
     var vizkey='<div class="nm-vizkey">' +
       '<div class="nm-vk-row"><span class="nm-vk-dot ring"></span>Works at the company</div>' +
-      '<div class="nm-vk-row"><span class="nm-vk-dot"></span>Board member or advisor (labelled)</div>' +
+      '<div class="nm-vk-row"><span class="nm-vk-dot"></span>Investor, board member or advisor (labelled)</div>' +
       '<div class="nm-vk-row"><span class="nm-vk-dot sm"></span><span class="nm-vk-dot lg"></span>Larger = more senior</div>' +
     '</div>';
     // legend bar above the graph carries the warmth color key + Map/List toggle only
@@ -3386,6 +3391,7 @@ function getAllCompaniesFlat(){
   window.openContacts=openContacts;
 })();
 
+// FDI:NETWORK-JS:END
 // === DETAIL VIEW ===
 function formatRowValue(v) {
   if (Array.isArray(v)) return '<ul>' + v.map(function(item){return '<li>'+item+'</li>';}).join('') + '</ul>';

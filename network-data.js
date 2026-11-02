@@ -18,7 +18,38 @@ window.NETWORK_DATA = {
       "Dana Cole",
       "Robin Vega",
       "Sky Morgan"
-    ]
+    ],
+    "excluded_connectors": [],
+    "roster_filter": {
+      "status": "applied",
+      "source": "https://www.primary.vc/people",
+      "roster_size": 65,
+      "dropped_connectors": 0,
+      "renamed": {}
+    },
+    "contact_verification": {
+      "status": "applied",
+      "provider": "exa/answer",
+      "calls": 7,
+      "verified": 7,
+      "cached": 0,
+      "errors": 0,
+      "skipped_cap": 0,
+      "skipped_budget": 0,
+      "skipped_breaker": 0,
+      "breaker_open": false,
+      "cost_usd": 0.035,
+      "contacts_dropped": {
+        "off_target": 0,
+        "legal": 0,
+        "former": 0,
+        "none": 0,
+        "unknown": 0,
+        "junior": 0,
+        "founder_elsewhere": 0,
+        "unverified": 0
+      }
+    }
   },
   "connectors": {
     "Robin Vega": {
